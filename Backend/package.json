@@ -1,0 +1,38 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "start": "node --experimental-modules server.js",
+    "simple": "node simple-server.js",
+    "server": "node --experimental-modules server.js",
+    "create-admin": "node --experimental-modules scripts/create-admin.mjs",
+    "start-env": "start.bat",
+    "setup": "setup.bat",
+    "install-deps": "npm install",
+    "check-env": "node -e \"console.log('Environment check:'); console.log('NODE_ENV:', process.env.NODE_ENV || 'not set'); console.log('PORT:', process.env.PORT || 'not set'); console.log('DB_URI:', process.env.DB_URI || 'not set');\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "google-auth-library": "^10.3.1",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.0",
+    "multer": "^2.0.2",
+    "node-fetch": "^3.3.2",
+    "nodemailer": "^7.0.9"
+  },
+  "devDependencies": {
+    "vite-plugin-node": "^5.0.1"
+  }
+}

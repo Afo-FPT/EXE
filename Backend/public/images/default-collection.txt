@@ -1,0 +1,6 @@
+# Default Collection Image Placeholder
+
+This is a placeholder for the default collection image.
+In production, you should replace this with an actual image file.
+
+The image should be placed at: `/public/images/default-collection.jpg`
