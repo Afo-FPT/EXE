@@ -82,8 +82,8 @@ const Header: React.FC = () => {
     }
   }, [authModalOpen, navbarOpen])
 
-  // Hide header on admin dashboard, mystery box, inventory, store, checkout, and cart pages
-  const shouldHideHeader = pathname?.startsWith('/admin') || pathname === '/mystery-box' || pathname === '/inventory' || pathname === '/store' || pathname === '/checkout' || pathname === '/cart'
+  // Hide header on admin dashboard, mystery box, inventory, store, checkout, cart, and collection pages
+  const shouldHideHeader = pathname?.startsWith('/admin') || pathname === '/mystery-box' || pathname === '/inventory' || pathname === '/store' || pathname === '/checkout' || pathname === '/cart' || pathname === '/collection'
   
   if (shouldHideHeader) {
     return null

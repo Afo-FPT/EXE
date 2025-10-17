@@ -119,14 +119,21 @@ const CollectionPage = () => {
 
   return (
     <div className="bg-gray-50">
-      {/* Breadcrumb */}
-      <Breadcrumb items={[{ label: 'Bộ Sưu Tập' }]} />
-
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Bộ Sưu Tập</h1>
-          <p className="text-gray-600">Khám phá các bộ sưu tập quân cờ độc đáo và xem model 3D</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Bộ Sưu Tập</h1>
+              <p className="text-gray-600">Khám phá các bộ sưu tập quân cờ độc đáo và xem model 3D</p>
+            </div>
+            <Link
+              href="/"
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition duration-200"
+            >
+              Về trang chủ
+            </Link>
+          </div>
         </div>
       </div>
 

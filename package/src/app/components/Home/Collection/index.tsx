@@ -30,16 +30,6 @@ const Gallery = () => {
           name: "Bộ sưu tập 2", 
           imgSrc: "/images/Gallery/ai2.webp",
           price: "39.99"
-        },
-        {
-          name: "Bộ sưu tập 3",
-          imgSrc: "/images/Gallery/ai3.webp", 
-          price: "49.99"
-        },
-        {
-          name: "Bộ sưu tập 4",
-          imgSrc: "/images/Gallery/ai2(1)(1).png",
-          price: "59.99"
         }
       ],
       FullMenuData: [
@@ -82,7 +72,7 @@ const Gallery = () => {
             columnClassName='masonry-column'>
             {/* Map through images */}
             {loading
-              ? Array.from({ length: 4 }).map((_, i) => (
+              ? Array.from({ length: 2 }).map((_, i) => (
                 <GalleryImagesSkeleton key={i} />
               ))
               : galleryImages.map((item, index) => (
@@ -100,10 +90,7 @@ const Gallery = () => {
                     <p className='text-white lg:text-2xl text-xl'>
                       {item.name}
                     </p>
-                    <div className='flex items-center justify-between w-full'>
-                      <p className='text-white lg:text-2xl text-xl'>
-                        $ {item.price}
-                      </p>
+                    <div className='flex items-center justify-end w-full'>
                       <Link
                         href='/collection'
                         className='text-white rounded-full bg-primary border duration-300 border-primary py-2 lg:px-6 md:px-4 px-3 hover:bg-primary/40 hover:backdrop-blur-xs md:text-base text-sm'>

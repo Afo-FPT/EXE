@@ -16,18 +16,18 @@ const Expert = () => {
     const staticProductData = [
       {
         name: "Sản phẩm 1",
-        description: "Mô tả sản phẩm 1",
-        imgSrc: "/images/Product/demo.png"
+        description: "Nhân vật chiến binh với trang phục truyền thống",
+        imgSrc: "/images/hero/sp1.png"
       },
       {
         name: "Sản phẩm 2",
-        description: "Mô tả sản phẩm 2", 
-        imgSrc: "/images/Product/demo1.png"
+        description: "Chiến binh với đầu hổ và trang phục cổ điển", 
+        imgSrc: "/images/hero/sp2.png"
       },
       {
         name: "Sản phẩm 3",
-        description: "Mô tả sản phẩm 3",
-        imgSrc: "/images/Product/demo.svg"
+        description: "Nữ chiến binh với trang phục truyền thống",
+        imgSrc: "/images/hero/sp3.png"
       }
     ]
     
