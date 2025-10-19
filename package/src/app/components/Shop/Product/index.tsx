@@ -13,16 +13,19 @@ const ProductList = () => {
     // Sử dụng data tĩnh thay vì fetch API
     const staticProductData = [
       {
+        id: 1,
         name: "Sản phẩm 1",
         description: "Mô tả sản phẩm 1",
         imgSrc: "/images/Product/demo.png"
       },
       {
+        id: 2,
         name: "Sản phẩm 2",
         description: "Mô tả sản phẩm 2", 
         imgSrc: "/images/Product/demo1.png"
       },
       {
+        id: 3,
         name: "Sản phẩm 3",
         description: "Mô tả sản phẩm 3",
         imgSrc: "/images/Product/demo.svg"

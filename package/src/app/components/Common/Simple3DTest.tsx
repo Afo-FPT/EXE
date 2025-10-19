@@ -3,14 +3,15 @@ import { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, useGLTF } from '@react-three/drei'
 import { Icon } from '@iconify/react'
+import { buildApiUrl } from '@/config/api'
 
 const Simple3DTest = () => {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
 
   const testUrls = [
-    'http://localhost:5000/uploads/models/demo.glb',
-    'http://localhost:5000/uploads/models/model-1759198863487-621154019.obj'
+    `${buildApiUrl('')}/uploads/models/demo.glb`,
+    `${buildApiUrl('')}/uploads/models/model-1759198863487-621154019.obj`
   ]
 
   const TestModel = ({ url }: { url: string }) => {

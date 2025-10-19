@@ -4,6 +4,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { useState } from 'react';
+import { buildApiUrl } from '@/config/api';
 
 interface CheckoutForm {
   fullName: string;
@@ -103,7 +104,7 @@ export default function Checkout() {
       console.log('📦 Order Data:', orderData);
       
       // Send order to backend
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(buildApiUrl('/orders'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -347,7 +348,7 @@ export default function Checkout() {
                       <div key={item.product._id} className="flex items-center space-x-3">
                         <img
                           className="w-12 h-12 object-cover rounded"
-                          src={`http://localhost:5000${item.product.image}`}
+                          src={`https://exe-backend.fly.dev${item.product.image}`}
                           alt={item.product.name}
                           onError={(e) => {
                             e.currentTarget.src = '/images/404.svg';

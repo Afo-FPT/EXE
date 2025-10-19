@@ -17,17 +17,17 @@ const Colection = () => {
       {
         name: "Bộ sưu tập 1",
         imgSrc: "/images/Gallery/ai1.webp",
-        price: "29.99"
+        price: 29.99
       },
       {
         name: "Bộ sưu tập 2",
         imgSrc: "/images/Gallery/ai2.webp", 
-        price: "39.99"
+        price: 39.99
       },
       {
         name: "Bộ sưu tập 3",
         imgSrc: "/images/Gallery/ai3.webp",
-        price: "49.99"
+        price: 49.99
       }
     ]
     

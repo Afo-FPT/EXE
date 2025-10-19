@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import Link from 'next/link';
+import { buildApiUrl } from '@/config/api';
 
 interface Collection {
   _id: string;
@@ -36,18 +37,35 @@ export default function Store() {
     const fetchData = async () => {
       try {
         // Fetch mystery bags
-        const bagsResponse = await fetch('http://localhost:5000/api/mystery-bags/public');
+        const bagsResponse = await fetch(buildApiUrl('/mystery-bags/public'));
+        console.log('🔍 Bags response status:', bagsResponse.status);
+        console.log('🔍 Bags response ok:', bagsResponse.ok);
+        
         if (bagsResponse.ok) {
           const bagsData = await bagsResponse.json();
-          console.log(' Mystery bags data:', bagsData.data);
-          setMysteryBags(bagsData.data);
+          console.log('📦 Mystery bags data:', bagsData);
+          console.log('📦 Mystery bags data.data:', bagsData.data);
+          setMysteryBags(bagsData.data || []);
+        } else {
+          console.error('❌ Failed to fetch mystery bags:', bagsResponse.status);
+          const errorText = await bagsResponse.text();
+          console.error('❌ Error response:', errorText);
         }
 
         // Fetch collections for filter
-        const collectionsResponse = await fetch('http://localhost:5000/api/collections/public');
+        const collectionsResponse = await fetch(buildApiUrl('/collections/public'));
+        console.log('🔍 Collections response status:', collectionsResponse.status);
+        console.log('🔍 Collections response ok:', collectionsResponse.ok);
+        
         if (collectionsResponse.ok) {
           const collectionsData = await collectionsResponse.json();
-          setCollections(collectionsData.data);
+          console.log('📚 Collections data:', collectionsData);
+          console.log('📚 Collections data.data:', collectionsData.data);
+          setCollections(collectionsData.data || []);
+        } else {
+          console.error('❌ Failed to fetch collections:', collectionsResponse.status);
+          const errorText = await collectionsResponse.text();
+          console.error('❌ Error response:', errorText);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -60,8 +78,12 @@ export default function Store() {
   }, []);
 
   const filteredBags = selectedCollection 
-    ? mysteryBags.filter(bag => bag.collection._id === selectedCollection)
+    ? mysteryBags.filter(bag => bag.collection && bag.collection._id === selectedCollection)
     : mysteryBags;
+
+  console.log('🔍 Mystery bags:', mysteryBags);
+  console.log('🔍 Filtered bags:', filteredBags);
+  console.log('🔍 Selected collection:', selectedCollection);
 
   const calculateDiscountedPrice = (price: number, discountPercent: number) => {
     return price * (1 - discountPercent / 100);
@@ -143,7 +165,7 @@ export default function Store() {
             >
               Tất cả
             </button>
-            {collections?.map(collection => (
+            {Array.isArray(collections) && collections.map(collection => (
               <button
                 key={collection._id}
                 onClick={() => setSelectedCollection(collection._id)}
@@ -161,7 +183,7 @@ export default function Store() {
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredBags && filteredBags.length > 0 ? (
+          {Array.isArray(filteredBags) && filteredBags.length > 0 ? (
             filteredBags.map((bag) => {
               const discountedPrice = calculateDiscountedPrice(bag.price, bag.discountPercent);
               return (
@@ -169,11 +191,11 @@ export default function Store() {
                   <div className="aspect-w-16 aspect-h-12">
                     <img
                       className="w-full h-48 object-cover"
-                      src={`http://localhost:5000${bag.image}`}
+                      src={`${bag.image}`}
                       alt={bag.name}
-                      onLoad={() => console.log('✅ Image loaded successfully:', `http://localhost:5000${bag.image}`)}
+                      onLoad={() => console.log('✅ Image loaded successfully:', `${bag.image}`)}
                       onError={(e) => {
-                        console.error('❌ Image failed to load:', `http://localhost:5000${bag.image}`);
+                        console.error('❌ Image failed to load:', `${bag.image}`);
                         e.currentTarget.src = '/images/404.svg';
                       }}
                     />
@@ -181,7 +203,7 @@ export default function Store() {
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                        {bag.collection.name}
+                        {bag.collection?.name || 'No Collection'}
                       </span>
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                         bag.stock > 0 

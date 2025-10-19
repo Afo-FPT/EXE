@@ -2,6 +2,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Icon } from '@iconify/react'
+import { buildApiUrl } from '@/config/api'
 
 interface Collection {
   _id: string
@@ -17,6 +18,7 @@ interface Collection {
     legendary: number
   }
   releaseDate: string
+  isActive: boolean
 }
 
 interface CollectionCardProps {
@@ -58,7 +60,7 @@ const CollectionCard = ({ collection, isSelected, onSelect }: CollectionCardProp
       {/* Cover Image */}
       <div className="relative aspect-video">
         <Image
-          src={collection.coverImage.startsWith('http') ? collection.coverImage : `http://localhost:5000${collection.coverImage}`}
+          src={collection.coverImage.startsWith('http') ? collection.coverImage : `${buildApiUrl('')}${collection.coverImage}`}
           alt={collection.name}
           fill
           className="object-cover"

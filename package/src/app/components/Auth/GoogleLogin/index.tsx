@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { buildApiUrl } from '@/config/api'
 
 interface GoogleLoginProps {
   onSuccess?: () => void
@@ -45,7 +46,7 @@ export default function GoogleLogin({ onSuccess, onError, className = '', childr
             const userData = await userInfo.json()
 
             // Send to backend
-            const backendResponse = await fetch('http://localhost:5000/api/google-login', {
+            const backendResponse = await fetch(buildApiUrl('/google-login'), {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

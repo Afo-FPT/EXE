@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { buildApiUrl } from '@/config/api';
 
 export const BackendStatus = () => {
   const [isBackendUp, setIsBackendUp] = useState<boolean | null>(null);
@@ -9,7 +10,7 @@ export const BackendStatus = () => {
   const checkBackend = async () => {
     try {
       setIsChecking(true);
-      const response = await fetch('http://localhost:5000/health', {
+      const response = await fetch(buildApiUrl('/health'), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

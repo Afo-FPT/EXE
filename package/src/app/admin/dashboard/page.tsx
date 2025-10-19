@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { buildApiUrl } from '@/config/api';
 
 interface DashboardStats {
   totalUsers: number;
@@ -24,7 +25,7 @@ export default function AdminDashboard() {
         console.log('🔍 Fetching dashboard data with token:', token?.substring(0, 20) + '...');
         
         // Fetch dashboard stats
-        const statsResponse = await fetch('http://localhost:5000/api/dashboard', {
+        const statsResponse = await fetch(buildApiUrl('/dashboard'), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -53,7 +54,7 @@ export default function AdminDashboard() {
         }
 
         // Fetch users list
-        const usersResponse = await fetch('http://localhost:5000/api/users', {
+        const usersResponse = await fetch(buildApiUrl('/users'), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',

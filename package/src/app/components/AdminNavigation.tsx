@@ -63,6 +63,14 @@ export default function AdminNavigation({
               🎴 Quản lý Collection
             </Link>
             <Link
+              href="/admin/chess-piece-management"
+              className={`block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors ${
+                currentPage === 'chess-piece-management' ? 'bg-blue-50 text-blue-700' : ''
+              }`}
+            >
+              ♟️ Quản lý Quân Cờ
+            </Link>
+            <Link
               href="/admin/user-management"
               className={`block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors ${
                 currentPage === 'user-management' ? 'bg-blue-50 text-blue-700' : ''

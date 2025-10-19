@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { buildApiUrl } from '@/config/api'
 
 // Extend Window interface for Google
 declare global {
@@ -56,7 +57,8 @@ const SocialSignIn = () => {
             console.log('User data:', userData)
 
             // Send to backend
-            const backendResponse = await fetch('http://localhost:5000/api/google-login', {
+            console.log('Sending request to:', buildApiUrl('/google-login'))
+            const backendResponse = await fetch(buildApiUrl('/google-login'), {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -66,6 +68,13 @@ const SocialSignIn = () => {
                 userData: userData
               })
             })
+
+            console.log('Backend response status:', backendResponse.status)
+            console.log('Backend response headers:', backendResponse.headers)
+
+            if (!backendResponse.ok) {
+              throw new Error(`HTTP error! status: ${backendResponse.status}`)
+            }
 
             const result = await backendResponse.json()
             console.log('Backend response:', result)

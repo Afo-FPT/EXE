@@ -6,6 +6,7 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 import Link from 'next/link';
 import AdminNavigation from '@/app/components/AdminNavigation';
 import { Icon } from '@iconify/react/dist/iconify.js';
+import { buildApiUrl } from '@/config/api';
 
 interface User {
   _id: string;
@@ -51,7 +52,7 @@ export default function UserManagementPage() {
       queryParams.append('page', pagination.page.toString());
       queryParams.append('limit', pagination.limit.toString());
 
-      const response = await fetch(`http://localhost:5000/api/users?${queryParams.toString()}`, {
+      const response = await fetch(`${buildApiUrl('/users')}?${queryParams.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -91,7 +92,7 @@ export default function UserManagementPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${userId}/role`, {
+      const response = await fetch(buildApiUrl(`/users/${userId}/role`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -128,7 +129,7 @@ export default function UserManagementPage() {
     if (!confirmDelete) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+      const response = await fetch(buildApiUrl(`/users/${userId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -15,16 +15,19 @@ const Expert = () => {
     // Sử dụng data tĩnh thay vì fetch API
     const staticProductData = [
       {
+        id: 1,
         name: "Sản phẩm 1",
         description: "Nhân vật chiến binh với trang phục truyền thống",
         imgSrc: "/images/hero/sp1.png"
       },
       {
+        id: 2,
         name: "Sản phẩm 2",
         description: "Chiến binh với đầu hổ và trang phục cổ điển", 
         imgSrc: "/images/hero/sp2.png"
       },
       {
+        id: 3,
         name: "Sản phẩm 3",
         description: "Nữ chiến binh với trang phục truyền thống",
         imgSrc: "/images/hero/sp3.png"

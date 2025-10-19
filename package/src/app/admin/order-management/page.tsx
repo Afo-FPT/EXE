@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import AdminNavigation from '@/app/components/AdminNavigation';
+import { buildApiUrl } from '@/config/api';
 
 interface Order {
   _id: string;
@@ -100,7 +101,7 @@ export default function OrderManagement() {
         ...(filters.search && { search: filters.search }),
       });
 
-      const response = await fetch(`http://localhost:5000/api/orders?${params}`, {
+      const response = await fetch(`${buildApiUrl('/orders')}?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
@@ -120,7 +121,7 @@ export default function OrderManagement() {
 
   const fetchStatistics = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/orders/statistics', {
+      const response = await fetch(buildApiUrl('/orders/statistics'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
@@ -137,7 +138,7 @@ export default function OrderManagement() {
 
   const updateOrderStatus = async (orderId: string, newStatus: string, adminNotes: string = '') => {
     try {
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+      const response = await fetch(buildApiUrl(`/orders/${orderId}/status`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -164,7 +165,7 @@ export default function OrderManagement() {
 
   const updatePaymentStatus = async (orderId: string, paymentStatus: string, transactionId: string = '') => {
     try {
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}/payment`, {
+      const response = await fetch(buildApiUrl(`/orders/${orderId}/payment`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -195,7 +196,7 @@ export default function OrderManagement() {
     }
     
     try {
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}/payment`, {
+      const response = await fetch(buildApiUrl(`/orders/${orderId}/payment`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -503,7 +504,7 @@ export default function OrderManagement() {
                             <div key={index} className="flex items-center space-x-2">
                               <img
                                 className="w-8 h-8 object-cover rounded"
-                                src={`http://localhost:5000${item.productImage}`}
+                                src={`https://exe-backend.fly.dev${item.productImage}`}
                                 alt={item.productName}
                                 onError={(e) => {
                                   e.currentTarget.src = '/images/404.svg';

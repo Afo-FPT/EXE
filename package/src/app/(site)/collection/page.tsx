@@ -10,6 +10,7 @@ import ChessPieceDetail from '@/app/components/Common/ChessPieceDetail'
 import CollectionStats from '@/app/components/Common/CollectionStats'
 import Breadcrumb from '@/app/components/Common/Breadcrumb'
 import FeatureGuide from '@/app/components/Common/FeatureGuide'
+import { buildApiUrl } from '@/config/api'
 
 interface Collection {
   _id: string
@@ -53,7 +54,7 @@ const CollectionPage = () => {
   const fetchCollections = async () => {
     try {
       console.log('📡 Fetching collections...')
-      const response = await fetch('http://localhost:5000/api/collections/active')
+      const response = await fetch(buildApiUrl('/collections/active'))
       
       if (!response.ok) {
         throw new Error('Failed to fetch collections')
@@ -77,7 +78,7 @@ const CollectionPage = () => {
       setLoadingPieces(true)
       console.log('📡 Fetching chess pieces for collection:', collectionId)
       
-      const response = await fetch(`http://localhost:5000/api/chess-pieces/collection/${collectionId}`)
+      const response = await fetch(`https://exe-backend.fly.dev/api/chess-pieces/collection/${collectionId}`)
       
       if (!response.ok) {
         throw new Error('Failed to fetch chess pieces')

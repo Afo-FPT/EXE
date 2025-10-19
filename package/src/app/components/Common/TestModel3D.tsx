@@ -3,12 +3,13 @@ import { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, useGLTF } from '@react-three/drei'
 import { Icon } from '@iconify/react'
+import { buildApiUrl } from '@/config/api'
 
 const TestModel3D = () => {
   const [showViewer, setShowViewer] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const testUrl = 'http://localhost:5000/uploads/models/demo.glb'
+  const testUrl = `${buildApiUrl('')}/uploads/models/demo.glb`
 
   const TestModel = () => {
     try {

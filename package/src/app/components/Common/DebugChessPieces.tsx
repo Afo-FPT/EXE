@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { buildApiUrl } from '@/config/api'
 
 interface ChessPiece {
   _id: string
@@ -19,12 +20,12 @@ const DebugChessPieces = () => {
   useEffect(() => {
     const fetchPieces = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/collections/active')
+        const response = await fetch(buildApiUrl('/collections/active'))
         const data = await response.json()
         
         if (data.success && data.collections.length > 0) {
           const collectionId = data.collections[0]._id
-          const piecesResponse = await fetch(`http://localhost:5000/api/chess-pieces/collection/${collectionId}`)
+          const piecesResponse = await fetch(buildApiUrl(`/chess-pieces/collection/${collectionId}`))
           const piecesData = await piecesResponse.json()
           
           if (piecesData.success) {
@@ -59,7 +60,7 @@ const DebugChessPieces = () => {
               <div className="text-sm text-gray-600">Image: {piece.image}</div>
               <div className="mt-2">
                 <a 
-                  href={`http://localhost:5000${piece.model3D}`}
+                  href={`https://exe-backend.fly.dev${piece.model3D}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-500 hover:underline text-sm"

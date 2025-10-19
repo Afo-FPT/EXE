@@ -5,6 +5,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, useGLTF, Environment, PresentationControls } from '@react-three/drei'
 import { FBXLoader } from 'three-stdlib'
 import * as THREE from 'three'
+import { buildApiUrl } from '@/config/api'
 
 interface Model3DViewerProps {
   modelUrl: string
@@ -16,13 +17,10 @@ const Model3D = ({ url }: { url: string }) => {
   const [error, setError] = useState(false)
   
   // Construct full URL if it's a relative path
-  const fullUrl = url.startsWith('http') ? url : `http://localhost:5000${url}`
+  const fullUrl = url.startsWith('http') ? url : `${buildApiUrl('')}${url}`
   
   // Load GLTF model
-  const { scene } = useGLTF(fullUrl, (error) => {
-    console.error('Error loading GLTF:', error)
-    setError(true)
-  })
+  const { scene } = useGLTF(fullUrl)
 
   useEffect(() => {
     if (scene) {
@@ -61,7 +59,7 @@ const FBXModel = ({ url }: { url: string }) => {
     const loader = new FBXLoader()
     
     // Construct full URL if it's a relative path
-    const fullUrl = url.startsWith('http') ? url : `http://localhost:5000${url}`
+    const fullUrl = url.startsWith('http') ? url : `https://exe-backend.fly.dev${url}`
     
     loader.load(
       fullUrl,
@@ -133,7 +131,7 @@ const Model3DViewer = ({ modelUrl, onClose }: Model3DViewerProps) => {
 
   useEffect(() => {
     // Construct full URL if it's a relative path
-    const fullUrl = modelUrl.startsWith('http') ? modelUrl : `http://localhost:5000${modelUrl}`
+    const fullUrl = modelUrl.startsWith('http') ? modelUrl : `https://exe-backend.fly.dev${modelUrl}`
     
     // Test if the model URL is accessible
     fetch(fullUrl, { 
@@ -185,7 +183,7 @@ const Model3DViewer = ({ modelUrl, onClose }: Model3DViewerProps) => {
                 <div className="text-center">
                   <Icon icon="solar:close-circle-bold" className="w-16 h-16 text-red-500 mx-auto mb-4" />
                   <p className="text-gray-600 mb-4">Không thể tải model 3D</p>
-                  <p className="text-sm text-gray-500 mb-4">URL: {modelUrl.startsWith('http') ? modelUrl : `http://localhost:5000${modelUrl}`}</p>
+                  <p className="text-sm text-gray-500 mb-4">URL: {modelUrl.startsWith('http') ? modelUrl : `https://exe-backend.fly.dev${modelUrl}`}</p>
                 </div>
               </div>
             ) : (

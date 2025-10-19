@@ -5,6 +5,8 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import AdminNavigation from '@/app/components/AdminNavigation';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { buildApiUrl } from '@/config/api';
 
 interface ChessPiece {
   _id: string;
@@ -52,12 +54,15 @@ export default function CollectionManagementPage() {
     name: '',
     description: '',
     theme: 'vietnam',
-    endDate: ''
+    endDate: '',
+    coverImage: ''
   });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selected3DFile, setSelected3DFile] = useState<File | null>(null);
   const [model3DPreview, setModel3DPreview] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
   const [pieceFormData, setPieceFormData] = useState({
     name: '',
     type: 'xe' as const,
@@ -112,11 +117,13 @@ export default function CollectionManagementPage() {
         return;
       }
       
-      // Kiểm tra kích thước file (max 50MB)
-      if (file.size > 50 * 1024 * 1024) {
-        alert('Kích thước file không được vượt quá 50MB!');
+      // Kiểm tra kích thước file (max 4MB để tương thích với Vercel)
+      if (file.size > 4 * 1024 * 1024) {
+        alert('Kích thước file không được vượt quá 4MB! Vercel có giới hạn cứng 4.5MB. Vui lòng nén file hoặc chọn file nhỏ hơn.');
         return;
       }
+      
+      console.log('📁 Selected 3D file:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
       
       setSelected3DFile(file);
       setModel3DPreview(file.name);
@@ -137,7 +144,7 @@ export default function CollectionManagementPage() {
   const fetchCollections = async () => {
     try {
       console.log('📡 Fetching collections for admin...');
-      const response = await fetch('http://localhost:5000/api/collections', {
+      const response = await fetch(buildApiUrl('/collections'), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -189,7 +196,7 @@ export default function CollectionManagementPage() {
       
       console.log('📡 Sending collection data with image...');
       
-      const response = await fetch('http://localhost:5000/api/collections', {
+      const response = await fetch(buildApiUrl('/collections'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -205,7 +212,7 @@ export default function CollectionManagementPage() {
         console.log('✅ Collection created successfully:', data);
         alert('Tạo collection thành công!');
         setShowCreateForm(false);
-        setFormData({ name: '', description: '', theme: 'vietnam', endDate: '' });
+        setFormData({ name: '', description: '', theme: 'vietnam', endDate: '', coverImage: '' });
         clearImage();
         fetchCollections();
       } else {
@@ -223,6 +230,9 @@ export default function CollectionManagementPage() {
   const handleAddChessPiece = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCollection) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
 
     try {
       console.log('📝 Adding chess piece with data:', pieceFormData);
@@ -245,9 +255,14 @@ export default function CollectionManagementPage() {
       }
       
       console.log('📡 Sending chess piece data with FormData');
-      console.log('🌐 API endpoint: http://localhost:5000/api/chess-pieces');
+      console.log('🌐 API endpoint:', buildApiUrl('/chess-pieces'));
       
-      const response = await fetch('http://localhost:5000/api/chess-pieces', {
+      // Simulate progress for large files
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 500);
+      
+      const response = await fetch(buildApiUrl('/chess-pieces'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -256,8 +271,16 @@ export default function CollectionManagementPage() {
         body: formData,
       });
 
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
       console.log('📡 Add chess piece response status:', response.status);
       console.log('📡 Response headers:', response.headers);
+
+      if (response.status === 413) {
+        alert('File quá lớn! Vercel có giới hạn cứng 4.5MB. Vui lòng chọn file nhỏ hơn 4MB hoặc nén file trước khi upload.');
+        return;
+      }
 
       if (response.ok) {
         const contentType = response.headers.get('content-type');
@@ -287,6 +310,9 @@ export default function CollectionManagementPage() {
     } catch (error) {
       console.error('❌ Network error adding chess piece:', error);
       alert('Lỗi kết nối khi thêm quân cờ! Vui lòng kiểm tra kết nối mạng và backend.');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -294,7 +320,7 @@ export default function CollectionManagementPage() {
     try {
       console.log('🔄 Toggling collection status:', collectionId, 'from', currentStatus, 'to', !currentStatus);
       
-      const response = await fetch(`http://localhost:5000/api/collections/${collectionId}`, {
+      const response = await fetch(buildApiUrl(`/collections/${collectionId}`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -326,7 +352,7 @@ export default function CollectionManagementPage() {
     try {
       console.log('🗑️ Deleting collection:', collectionId);
       
-      const response = await fetch(`http://localhost:5000/api/collections/${collectionId}`, {
+      const response = await fetch(buildApiUrl(`/collections/${collectionId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -336,8 +362,11 @@ export default function CollectionManagementPage() {
       console.log('📡 Delete collection response:', response.status);
 
       if (response.ok) {
-        console.log('✅ Collection deleted successfully');
-        fetchCollections();
+        const result = await response.json();
+        console.log('✅ Collection deleted successfully:', result);
+        console.log('🔄 Refreshing collections list...');
+        await fetchCollections();
+        console.log('✅ Collections list refreshed');
         alert('Đã xóa collection thành công!');
       } else {
         const errorData = await response.json();
@@ -348,6 +377,40 @@ export default function CollectionManagementPage() {
     } catch (error) {
       console.error('❌ Network error deleting collection:', error);
       alert('Lỗi kết nối khi xóa collection! Vui lòng kiểm tra kết nối mạng.');
+    }
+  };
+
+  const deleteChessPiece = async (chessPieceId: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa quân cờ này?')) return;
+
+    try {
+      console.log('🗑️ Deleting chess piece:', chessPieceId);
+      
+      const response = await fetch(buildApiUrl(`/chess-pieces/${chessPieceId}`), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      console.log('📡 Delete chess piece response:', response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Chess piece deleted successfully:', result);
+        console.log('🔄 Refreshing collections list...');
+        await fetchCollections();
+        console.log('✅ Collections list refreshed');
+        alert('Đã xóa quân cờ thành công!');
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Error deleting chess piece:', response.status, errorData);
+        const errorMessage = errorData.errors?.join(', ') || errorData.message || 'Không thể xóa quân cờ';
+        alert(`Lỗi: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error('❌ Network error deleting chess piece:', error);
+      alert('Lỗi kết nối khi xóa quân cờ! Vui lòng kiểm tra kết nối mạng.');
     }
   };
 
@@ -376,7 +439,7 @@ export default function CollectionManagementPage() {
         formDataToSend.append('coverImage', formData.coverImage);
       }
 
-      const response = await fetch(`http://localhost:5000/api/collections/${selectedCollection._id}`, {
+      const response = await fetch(buildApiUrl(`/collections/${selectedCollection._id}`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -444,11 +507,11 @@ export default function CollectionManagementPage() {
       console.log('🧪 Testing API endpoints...');
       
       // Test health check
-      const healthResponse = await fetch('http://localhost:5000/health');
+      const healthResponse = await fetch(buildApiUrl('/health'));
       console.log('🏥 Health check status:', healthResponse.status);
       
       // Test API health
-      const apiHealthResponse = await fetch('http://localhost:5000/api/health');
+      const apiHealthResponse = await fetch(buildApiUrl('/api/health'));
       console.log('🔌 API health status:', apiHealthResponse.status);
       
       if (apiHealthResponse.ok) {
@@ -456,7 +519,7 @@ export default function CollectionManagementPage() {
         console.log('✅ API health data:', apiHealthData);
         
         // Test chess-pieces endpoint
-        const chessResponse = await fetch('http://localhost:5000/api/chess-pieces', {
+        const chessResponse = await fetch(buildApiUrl('/chess-pieces'), {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -478,19 +541,22 @@ export default function CollectionManagementPage() {
 
   if (isLoading) {
     return (
-      <ProtectedRoute requiredRole="admin">
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+      <ErrorBoundary>
+        <ProtectedRoute requiredRole="admin">
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+            </div>
           </div>
-        </div>
-      </ProtectedRoute>
+        </ProtectedRoute>
+      </ErrorBoundary>
     );
   }
 
   return (
-    <ProtectedRoute requiredRole="admin">
+    <ErrorBoundary>
+      <ProtectedRoute requiredRole="admin">
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white shadow-sm border-b">
@@ -643,11 +709,11 @@ export default function CollectionManagementPage() {
                             <div className="flex-shrink-0 aspect-square w-16">
                               <img
                                 className="w-16 h-16 rounded-lg object-cover"
-                                src={collection.coverImage.startsWith('http') ? collection.coverImage : `http://localhost:5000${collection.coverImage}`}
+                                src={collection.coverImage.startsWith('http') ? collection.coverImage : `/uploads/collections/${collection.coverImage}`}
                                 alt={collection.name}
                                 onError={(e) => {
                                   // Fallback nếu ảnh không load được
-                                  e.currentTarget.src = 'https://via.placeholder.com/64x64?text=Collection';
+                                  e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjMyIiB5PSIzNiIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjNkI3MjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5Db2xsZWN0aW9uPC90ZXh0Pgo8L3N2Zz4K';
                                 }}
                               />
                             </div>
@@ -994,7 +1060,10 @@ export default function CollectionManagementPage() {
                           <p className="pl-1">hoặc kéo thả vào đây</p>
                         </div>
                         <p className="text-xs text-gray-500">
-                          FBX, GLB, GLTF, DAE tối đa 50MB
+                          FBX, GLB, GLTF, DAE tối đa 4MB (Vercel limit)
+                        </p>
+                        <p className="text-xs text-yellow-600 mt-1">
+                          💡 File lớn hơn 4MB? Hãy nén file bằng Blender hoặc các công cụ nén 3D
                         </p>
                       </div>
                     </div>
@@ -1028,19 +1097,37 @@ export default function CollectionManagementPage() {
                     )}
                   </div>
 
+                  {/* Progress Bar */}
+                  {isUploading && (
+                    <div className="pt-4">
+                      <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                        <span>Đang upload...</span>
+                        <span>{uploadProgress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex justify-end space-x-3 pt-4">
                     <button
                       type="button"
                       onClick={() => setShowAddPieceForm(false)}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                      disabled={isUploading}
                     >
                       Hủy
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isUploading}
                     >
-                      Thêm Quân Cờ
+                      {isUploading ? 'Đang upload...' : 'Thêm Quân Cờ'}
                     </button>
                   </div>
                 </form>
@@ -1133,7 +1220,7 @@ export default function CollectionManagementPage() {
                       <div className="mb-4">
                         <p className="text-sm text-gray-600 mb-2">Ảnh hiện tại:</p>
                         <img
-                          src={formData.coverImage.startsWith('http') ? formData.coverImage : `http://localhost:5000${formData.coverImage}`}
+                          src={formData.coverImage.startsWith('http') ? formData.coverImage : `/uploads/collections/${formData.coverImage}`}
                           alt="Current cover"
                           className="aspect-square w-32 object-cover rounded-lg border"
                         />
@@ -1220,5 +1307,6 @@ export default function CollectionManagementPage() {
         )}
       </div>
     </ProtectedRoute>
+    </ErrorBoundary>
   );
 }

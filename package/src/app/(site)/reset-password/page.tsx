@@ -1,10 +1,11 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Icon } from '@iconify/react'
 import Link from 'next/link'
+import { buildApiUrl } from '@/config/api'
 
-const ResetPasswordPage = () => {
+const ResetPasswordContent = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
   const token = searchParams.get('token')
@@ -29,7 +30,7 @@ const ResetPasswordPage = () => {
 
     const verifyToken = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/password-reset/verify-token/${token}`)
+        const response = await fetch(buildApiUrl(`/password-reset/verify-token/${token}`))
         const data = await response.json()
 
         if (response.ok && data.success) {
@@ -67,7 +68,7 @@ const ResetPasswordPage = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/password-reset/reset-password', {
+      const response = await fetch(buildApiUrl('/password-reset/reset-password'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -252,6 +253,22 @@ const ResetPasswordPage = () => {
         </div>
       </div>
     </div>
+  )
+}
+
+const ResetPasswordPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Icon icon="solar:loading-bold" className="text-6xl text-primary mx-auto mb-4 animate-spin" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Đang tải...</h2>
+          <p className="text-gray-600">Vui lòng chờ trong giây lát</p>
+        </div>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { buildApiUrl } from '@/config/api';
 
 interface ChessPiece {
   _id: string;
@@ -90,7 +91,7 @@ export default function MysteryBoxPage() {
   const checkBackendHealth = async () => {
     try {
       console.log('🏥 Checking backend health...');
-      const response = await fetch('http://localhost:5000/health');
+      const response = await fetch('https://exe-backend.fly.dev/health');
       
       if (response.ok) {
         console.log('✅ Backend is healthy');
@@ -111,7 +112,7 @@ export default function MysteryBoxPage() {
     try {
       setBackendError(null); // Reset error state
       console.log('📡 Fetching active collections...');
-      const response = await fetch('http://localhost:5000/api/collections/active');
+      const response = await fetch(buildApiUrl('/collections/active'));
       console.log('📡 Collections response status:', response.status);
       
       if (response.ok) {
@@ -125,7 +126,7 @@ export default function MysteryBoxPage() {
             console.log('📊 Number of collections:', data.collections.length);
             
             // Debug từng collection
-            data.collections.forEach((collection, index) => {
+            data.collections.forEach((collection: any, index: number) => {
               console.log(`📋 Collection ${index + 1}:`, {
                 name: collection.name,
                 coverImage: collection.coverImage,
@@ -170,7 +171,7 @@ export default function MysteryBoxPage() {
   const fetchInventoryStats = async () => {
     try {
       console.log('📡 Fetching inventory stats...');
-      const response = await fetch('http://localhost:5000/api/mystery-box/inventory/stats', {
+      const response = await fetch(buildApiUrl('/mystery-box/inventory/stats'), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -220,7 +221,7 @@ export default function MysteryBoxPage() {
       console.log('🎁 Opening mystery box for collection:', collectionId);
       console.log('🔑 Using token:', token ? 'Valid token' : 'No token');
       
-      const response = await fetch(`http://localhost:5000/api/mystery-box/open/${collectionId}`, {
+      const response = await fetch(buildApiUrl(`/mystery-box/open/${collectionId}`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -345,7 +346,7 @@ export default function MysteryBoxPage() {
               🔄 Thử lại
             </button>
           </div>
-        ) : banners.length === 0 ? (
+        ) : collections.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🎭</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Chưa có banner nào</h3>
@@ -358,13 +359,13 @@ export default function MysteryBoxPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {banners.map((banner) => {
+            {collections.map((banner) => {
               // Tạo URL ảnh đúng cách
               let imageUrl = banner.coverImage;
               
               // Kiểm tra nếu là placeholder URL thì không thêm localhost
               if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.includes('placeholder')) {
-                imageUrl = `http://localhost:5000${imageUrl}`;
+                imageUrl = `https://exe-backend.fly.dev${imageUrl}`;
               }
               
               console.log('🖼️ Banner:', banner.name);
@@ -384,7 +385,7 @@ export default function MysteryBoxPage() {
                       // Hide fallback when image loads
                       const fallback = e.currentTarget.nextElementSibling;
                       if (fallback) {
-                        fallback.style.display = 'none';
+                        (fallback as HTMLElement).style.display = 'none';
                       }
                     }}
                     onError={(e) => {
@@ -394,7 +395,7 @@ export default function MysteryBoxPage() {
                       e.currentTarget.style.display = 'none';
                       const fallback = e.currentTarget.nextElementSibling;
                       if (fallback) {
-                        fallback.style.display = 'block';
+                        (fallback as HTMLElement).style.display = 'block';
                       }
                     }}
                   />

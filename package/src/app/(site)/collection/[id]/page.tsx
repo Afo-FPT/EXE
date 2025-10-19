@@ -8,6 +8,7 @@ import ChessPieceCard from '@/app/components/Common/ChessPieceCard'
 import ChessPieceDetail from '@/app/components/Common/ChessPieceDetail'
 import Model3DViewer from '@/app/components/Common/Model3DViewer'
 import FeatureGuide from '@/app/components/Common/FeatureGuide'
+import { buildApiUrl } from '@/config/api'
 
 interface Collection {
   _id: string
@@ -54,7 +55,7 @@ const CollectionDetailPage = () => {
   const fetchCollection = async () => {
     try {
       console.log('📡 Fetching collection:', collectionId)
-      const response = await fetch(`http://localhost:5000/api/collections/public/${collectionId}`)
+      const response = await fetch(buildApiUrl(`/collections/public/${collectionId}`))
       
       if (!response.ok) {
         throw new Error('Failed to fetch collection')

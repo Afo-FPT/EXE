@@ -1,0 +1,63 @@
+{
+  "functions": {
+    "src/app/api/chess-pieces/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/collections/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/collections/[id]/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/collections/public/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/chess-pieces/[id]/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/mystery-bags/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/mystery-bags/public/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/mystery-bags/admin/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/mystery-bags/admin/[id]/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_MAX_FILE_SIZE": "104857600",
+    "DB_URI": "mongodb+srv://quanha:quanha123@cluster0.8qjqj.mongodb.net/exe_project?retryWrites=true&w=majority"
+  }
+}

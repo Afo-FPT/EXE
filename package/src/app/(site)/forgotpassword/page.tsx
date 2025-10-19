@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { Icon } from '@iconify/react'
 import Link from 'next/link'
+import { buildApiUrl } from '@/config/api'
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('')
@@ -15,7 +16,7 @@ const ForgotPasswordPage = () => {
     setLoading(true)
 
     try {
-      const response = await fetch('http://localhost:5000/api/password-reset/forgot-password', {
+      const response = await fetch(buildApiUrl('/password-reset/forgot-password'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

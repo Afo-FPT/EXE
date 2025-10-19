@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Icon } from '@iconify/react'
+import { buildApiUrl } from '@/config/api'
 
 const ProfilePage = () => {
   const { user } = useAuth()
@@ -203,7 +204,7 @@ const ChangePasswordModal = ({ onClose }: { onClose: () => void }) => {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:5000/api/change-password', {
+      const response = await fetch(buildApiUrl('/change-password'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

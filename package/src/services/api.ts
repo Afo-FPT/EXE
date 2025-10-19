@@ -58,12 +58,12 @@ class ApiService {
         });
         
         // Nếu errorData có errors array (backend validation errors)
-        if (errorData.errors && Array.isArray(errorData.errors)) {
-          throw new Error(errorData.errors.join(', '));
+        if ((errorData as any).errors && Array.isArray((errorData as any).errors)) {
+          throw new Error((errorData as any).errors.join(', '));
         }
         // Nếu có message
-        if (errorData.message) {
-          throw new Error(errorData.message);
+        if ((errorData as any).message) {
+          throw new Error((errorData as any).message);
         }
         // Fallback
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -76,7 +76,7 @@ class ApiService {
       console.error('❌ API request failed:', error);
       
       // Xử lý các loại lỗi khác nhau
-      if (error.name === 'AbortError') {
+      if ((error as any).name === 'AbortError') {
         throw new Error('Request timeout. Server không phản hồi trong thời gian quy định.');
       }
       

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { buildApiUrl } from '@/config/api';
 
 // Types
 export interface User {
@@ -15,7 +16,7 @@ export interface User {
 
 interface LoginResponse {
   message: string;
-  data: {
+  user: {
     id: string;
     username: string;
     email: string;
@@ -26,7 +27,7 @@ interface LoginResponse {
 
 interface RegisterResponse {
   message: string;
-  data: {
+  user: {
     id: string;
     username: string;
     email: string;
@@ -153,7 +154,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           
           // If token decode fails, try to verify with backend
           try {
-            const response = await fetch('http://localhost:5000/api/verify-token', {
+            const response = await fetch(buildApiUrl('/verify-token'), {
               method: 'GET',
               headers: {
                 'Authorization': `Bearer ${storedToken}`,
@@ -201,7 +202,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log('🔐 Attempting login for:', email);
       
-      const response = await fetch('http://localhost:5000/api/signin', {
+      const response = await fetch(buildApiUrl('/signin'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -236,15 +237,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       const data: LoginResponse = await response.json();
-      console.log('✅ Login successful:', data.data.username, 'Role:', data.data.role);
+      console.log('✅ Login successful:', data.user.username, 'Role:', data.user.role);
       
       // Transform backend response to frontend format
       const userData = {
-        _id: data.data.id,
-        id: data.data.id,
-        username: data.data.username,
-        email: data.data.email,
-        role: data.data.role
+        _id: data.user.id,
+        id: data.user.id,
+        username: data.user.username,
+        email: data.user.email,
+        role: data.user.role
       };
       
       setUser(userData);
@@ -255,7 +256,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       showToast('Đăng nhập thành công! Chào mừng bạn trở lại! 🎉', 'success');
 
       // Redirect based on role
-      if (data.data.role === 'admin') {
+      if (data.user.role === 'admin') {
         router.push('/admin/dashboard');
       } else {
         router.push('/');
@@ -272,7 +273,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log('📝 Attempting register for:', username, email);
       
-      const response = await fetch('http://localhost:5000/api/signup', {
+      const response = await fetch(buildApiUrl('/signup'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -307,15 +308,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       const data: RegisterResponse = await response.json();
-      console.log('✅ Register successful:', data.data.username, 'Role:', data.data.role);
+      console.log('✅ Register successful:', data.user.username, 'Role:', data.user.role);
       
       // Transform backend response to frontend format
       const userData = {
-        _id: data.data.id,
-        id: data.data.id,
-        username: data.data.username,
-        email: data.data.email,
-        role: data.data.role
+        _id: data.user.id,
+        id: data.user.id,
+        username: data.user.username,
+        email: data.user.email,
+        role: data.user.role
       };
       
       setUser(userData);
@@ -326,7 +327,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       showToast('Đăng ký thành công! Chào mừng bạn đến với EXE Project! 🎉', 'success');
 
       // Redirect based on role
-      if (data.data.role === 'admin') {
+      if (data.user.role === 'admin') {
         router.push('/admin/dashboard');
       } else {
         router.push('/');
@@ -342,7 +343,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = async () => {
     try {
       if (token) {
-        await fetch('http://localhost:5000/api/logout', {
+        await fetch(buildApiUrl('/logout'), {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

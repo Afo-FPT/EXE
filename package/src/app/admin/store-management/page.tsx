@@ -5,6 +5,8 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import AdminNavigation from '@/app/components/AdminNavigation';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { buildApiUrl } from '@/config/api';
 
 interface MysteryBag {
   _id: string;
@@ -42,22 +44,49 @@ export default function StoreManagement() {
   const [imagePreview, setImagePreview] = useState<string>('');
 
   useEffect(() => {
+    console.log('🔄 useEffect - Fetching mystery bags...');
     const fetchData = async () => {
       try {
+        console.log('🌐 Fetching from:', buildApiUrl('/mystery-bags/admin'));
         // Fetch mystery bags
-        const bagsResponse = await fetch('http://localhost:5000/api/mystery-bags/admin', {
+        const bagsResponse = await fetch(buildApiUrl('/mystery-bags/admin'), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
+        console.log('📡 Response status:', bagsResponse.status);
+        console.log('📡 Response ok:', bagsResponse.ok);
 
         if (bagsResponse.ok) {
           const bagsData = await bagsResponse.json();
-          setMysteryBags(bagsData.data);
+          console.log('✅ Mystery bags data received:', bagsData);
+          
+          // Ensure we have an array and filter out invalid items
+          const rawArray = Array.isArray(bagsData) ? bagsData : 
+                          Array.isArray(bagsData.data) ? bagsData.data : 
+                          Array.isArray(bagsData.bags) ? bagsData.bags : 
+                          Array.isArray(bagsData.mysteryBags) ? bagsData.mysteryBags : [];
+          
+          // Filter out null/undefined items and ensure they have required properties
+          const bagsArray = rawArray.filter((item: any) => 
+            item && 
+            typeof item === 'object' && 
+            item._id && 
+            item.name
+          );
+          
+          console.log('📦 Raw array length:', rawArray.length);
+          console.log('📦 Filtered array length:', bagsArray.length);
+          console.log('🔍 First valid item:', bagsArray[0]);
+          setMysteryBags(bagsArray);
+        } else {
+          console.error('❌ Error fetching mystery bags:', bagsResponse.status);
+          setMysteryBags([]); // Set empty array on error
         }
       } catch (error) {
         console.error('Error fetching data:', error);
+        setMysteryBags([]); // Set empty array on error
       } finally {
         setIsLoading(false);
       }
@@ -72,8 +101,8 @@ export default function StoreManagement() {
     e.preventDefault();
     try {
       const url = editingBag 
-        ? `http://localhost:5000/api/mystery-bags/admin/${editingBag._id}`
-        : 'http://localhost:5000/api/mystery-bags';
+        ? buildApiUrl(`/mystery-bags/admin/${editingBag._id}`)
+        : buildApiUrl('/mystery-bags');
       
       const method = editingBag ? 'PUT' : 'POST';
       
@@ -112,10 +141,25 @@ export default function StoreManagement() {
             bag._id === editingBag._id ? result.data : bag
           ));
         } else {
-          setMysteryBags(bags => [...bags, result.data]);
+          setMysteryBags(bags => {
+            const currentBags = Array.isArray(bags) ? bags : [];
+            const newItem = result.data;
+            // Only add if the new item is valid
+            if (newItem && newItem._id && newItem.name) {
+              return [...currentBags, newItem];
+            }
+            console.warn('⚠️ Invalid new item:', newItem);
+            return currentBags;
+          });
         }
         resetForm();
         alert(editingBag ? 'Cập nhật thành công!' : 'Tạo sản phẩm thành công!');
+        
+        // Refresh data after successful creation/update
+        if (!editingBag) {
+          // Refresh the page to show new data
+          window.location.reload();
+        }
       } else {
         console.error('Response status:', response.status);
         console.error('Response statusText:', response.statusText);
@@ -158,16 +202,16 @@ export default function StoreManagement() {
 
   const handleEdit = (bag: MysteryBag) => {
     setFormData({
-      name: bag.name,
-      collection: bag.collection.name,
-      description: bag.description,
-      price: bag.price.toString(),
-      discountPercent: bag.discountPercent.toString(),
-      image: bag.image,
-      stock: bag.stock.toString()
+      name: bag.name || '',
+      collection: bag.collection?.name || '',
+      description: bag.description || '',
+      price: (bag.price || 0).toString(),
+      discountPercent: (bag.discountPercent || 0).toString(),
+      image: bag.image || '',
+      stock: (bag.stock || 0).toString()
     });
     setSelectedFile(null);
-    setImagePreview(bag.image);
+    setImagePreview(bag.image || '');
     setEditingBag(bag);
     setShowCreateForm(true);
   };
@@ -176,25 +220,43 @@ export default function StoreManagement() {
     if (!confirm('Bạn có chắc chắn muốn xóa túi mù này?')) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/api/mystery-bags/admin/${id}`, {
+      console.log('🗑️ Deleting mystery bag with ID:', id);
+      console.log('🌐 DELETE URL:', buildApiUrl(`/mystery-bags/admin/${id}`));
+      
+      const response = await fetch(buildApiUrl(`/mystery-bags/admin/${id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
+      
+      console.log('📡 Delete response status:', response.status);
+      console.log('📡 Delete response ok:', response.ok);
 
       if (response.ok) {
-        setMysteryBags(bags => bags.filter(bag => bag._id !== id));
+        const result = await response.json();
+        console.log('✅ Delete result:', result);
+        
+        setMysteryBags(bags => {
+          const currentBags = Array.isArray(bags) ? bags : [];
+          return currentBags.filter(bag => bag && bag._id !== id);
+        });
+        
+        alert('Xóa túi mù thành công!');
+      } else {
+        console.error('❌ Delete failed:', response.status);
+        alert('Có lỗi xảy ra khi xóa túi mù');
       }
     } catch (error) {
-      console.error('Error deleting mystery bag:', error);
+      console.error('❌ Error deleting mystery bag:', error);
+      alert('Có lỗi xảy ra khi xóa túi mù');
     }
   };
 
   const toggleActive = async (bag: MysteryBag) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/mystery-bags/admin/${bag._id}`, {
+      const response = await fetch(buildApiUrl(`/mystery-bags/${bag._id}`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -205,9 +267,15 @@ export default function StoreManagement() {
 
       if (response.ok) {
         const result = await response.json();
-        setMysteryBags(bags => bags.map(b => 
-          b._id === bag._id ? result.data : b
-        ));
+        setMysteryBags(bags => {
+          const currentBags = Array.isArray(bags) ? bags : [];
+          return currentBags.map(b => {
+            if (b && b._id === bag._id && (result.bag || result.data)) {
+              return result.bag || result.data;
+            }
+            return b;
+          }).filter(item => item && item._id); // Filter out invalid items
+        });
       }
     } catch (error) {
       console.error('Error updating mystery bag:', error);
@@ -241,8 +309,9 @@ export default function StoreManagement() {
   }
 
   return (
-    <ProtectedRoute requiredRole="admin">
-      <div className="min-h-screen bg-gray-50">
+    <ErrorBoundary>
+      <ProtectedRoute requiredRole="admin">
+        <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -427,52 +496,52 @@ export default function StoreManagement() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {mysteryBags && mysteryBags.length > 0 ? (
-                    mysteryBags.map((bag) => (
+                  {Array.isArray(mysteryBags) && mysteryBags.length > 0 ? (
+                    mysteryBags.filter(bag => bag && bag._id).map((bag) => (
                       <tr key={bag._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-12 w-12">
                               <img
                                 className="h-12 w-12 rounded-lg object-cover"
-                                src={bag.image}
-                                alt={bag.name}
+                                src={bag.image ? bag.image : '/images/404.svg'}
+                                alt={bag.name || 'Mystery Bag'}
                                 onError={(e) => {
                                   e.currentTarget.src = '/images/404.svg';
                                 }}
                               />
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{bag.name}</div>
+                              <div className="text-sm font-medium text-gray-900">{bag.name || 'Unnamed'}</div>
                               <div className="text-sm text-gray-500 truncate max-w-xs">
-                                {bag.description}
+                                {bag.description || 'No description'}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{bag.collection.name}</div>
+                          <div className="text-sm text-gray-900">{bag.collection?.name || 'No Collection'}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {bag.price.toLocaleString('vi-VN')} VNĐ
+                            {(bag.price || 0).toLocaleString('vi-VN')} VNĐ
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {bag.discountPercent > 0 ? `${bag.discountPercent}%` : 'Không'}
+                            {(bag.discountPercent || 0) > 0 ? `${bag.discountPercent}%` : 'Không'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{bag.stock}</div>
+                          <div className="text-sm text-gray-900">{bag.stock || 0}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            bag.isActive 
+                            (bag.isActive ?? true)
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
-                            {bag.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                            {(bag.isActive ?? true) ? 'Hoạt động' : 'Tạm dừng'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -525,5 +594,6 @@ export default function StoreManagement() {
         </div>
       </div>
     </ProtectedRoute>
+    </ErrorBoundary>
   );
 }

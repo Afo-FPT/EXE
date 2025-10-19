@@ -1,17 +1,17 @@
-// API Configuration for backup04 backend
+// API Configuration for Next.js API routes
 export const API_CONFIG = {
-  // Base URL for your backend API
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  // Base URL for Next.js API routes (same origin, no CORS needed)
+  BASE_URL: '/api',
   
   // API Endpoints
   ENDPOINTS: {
-    // Auth endpoints - Khớp với backend thực tế
+    // Auth endpoints - Next.js API routes
     AUTH: {
-      LOGIN: '/signin',               // Backend có /signin
-      REGISTER: '/signup',            // Backend có /signup
-      LOGOUT: '/logout',              // Backend có /logout
-      ME: '/users',                   // Backend có /users (thay thế /me)
-      REFRESH: '/refresh',            // Không có trong backend
+      LOGIN: '/signin',
+      REGISTER: '/signup',
+      LOGOUT: '/logout',
+      ME: '/users',
+      REFRESH: '/refresh',
     },
     
     // User endpoints

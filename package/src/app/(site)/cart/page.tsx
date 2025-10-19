@@ -4,6 +4,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { useState } from 'react';
+import { buildApiUrl } from '@/config/api';
 
 export default function Cart() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -115,7 +116,7 @@ export default function Cart() {
                         <div className="flex-shrink-0">
                           <img
                             className="w-20 h-20 object-cover rounded-lg"
-                            src={`http://localhost:5000${item.product.image}`}
+                            src={`${buildApiUrl('')}${item.product.image}`}
                             alt={item.product.name}
                             onError={(e) => {
                               e.currentTarget.src = '/images/404.svg';

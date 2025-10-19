@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { buildApiUrl } from '@/config/api';
 
 // Extend Window interface for Google
 declare global {
@@ -132,7 +133,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode }) => {
             console.log('User data:', userData);
 
             // Send to backend
-            const backendResponse = await fetch('http://localhost:5000/api/google-login', {
+            const backendResponse = await fetch(buildApiUrl('/google-login'), {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
