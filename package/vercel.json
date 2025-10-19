@@ -35,6 +35,10 @@
     "src/app/api/mystery-bags/admin/[id]/route.ts": {
       "maxDuration": 60,
       "memory": 1024
+    },
+    "src/app/api/test/route.ts": {
+      "maxDuration": 10,
+      "memory": 512
     }
   },
   "headers": [

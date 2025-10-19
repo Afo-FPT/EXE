@@ -6,6 +6,9 @@ import MysteryBag from '@/lib/models/MysteryBag';
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 GET /api/mystery-bags/public - Starting...');
+    console.log('🔍 Request URL:', request.url);
+    console.log('🔍 Request method:', request.method);
+    
     await connectDB();
     console.log('✅ Database connected');
     
@@ -23,10 +26,13 @@ export async function GET(request: NextRequest) {
     
   } catch (error) {
     console.error('❌ Get public mystery bags error:', error);
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack');
+    
     return NextResponse.json({
       success: false,
       message: 'Failed to fetch mystery bags',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      details: process.env.NODE_ENV === 'development' ? error : undefined
     }, { status: 500 });
   }
 }
