@@ -20,6 +20,7 @@
     "@react-three/fiber": "^9.1.2",
     "@splinetool/react-spline": "^4.0.0",
     "@splinetool/runtime": "^1.10.13",
+    "@vercel/blob": "^1.1.1",
     "aos": "^2.3.4",
     "axios": "^1.7.2",
     "bcryptjs": "^3.0.2",

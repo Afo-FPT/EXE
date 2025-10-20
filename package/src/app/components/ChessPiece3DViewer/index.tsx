@@ -1,9 +1,8 @@
 'use client'
 
-import { Canvas, useLoader } from '@react-three/fiber'
+import { Canvas } from '@react-three/fiber'
 import { OrbitControls, useGLTF } from '@react-three/drei'
 import { Suspense, useState, useEffect } from 'react'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 
 type ChessPiece3DViewerProps = {
   modelUrl: string
@@ -27,17 +26,13 @@ function Model({ url, onError }: { url: string; onError: (error: string) => void
   }
   
   try {
-    if (fileExtension === 'obj') {
-      // Sử dụng OBJLoader cho file .obj
-      const obj = useLoader(OBJLoader, url)
-      return <primitive object={obj} scale={1.5} />
-    } else if (['glb', 'gltf'].includes(fileExtension)) {
+    if (['glb', 'gltf'].includes(fileExtension)) {
       // Sử dụng useGLTF cho file .glb, .gltf
       const { scene } = useGLTF(url)
       return <primitive object={scene} scale={1.5} />
     } else {
       // Không hỗ trợ định dạng khác
-      onError(`Định dạng file ${fileExtension} chưa được hỗ trợ. Chỉ hỗ trợ .obj, .glb, .gltf`)
+      onError(`Định dạng file ${fileExtension} chưa được hỗ trợ. Chỉ hỗ trợ .glb, .gltf`)
       return (
         <mesh>
           <boxGeometry args={[2, 2, 2]} />

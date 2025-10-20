@@ -109,8 +109,13 @@ export default function OrderManagement() {
 
       if (response.ok) {
         const data = await response.json();
-        setOrders(data.data);
-        setTotalPages(data.pagination.totalPages);
+        console.log('📦 Orders API response:', data);
+        setOrders(data.data || []);
+        setTotalPages(data.pagination?.totalPages || 1);
+      } else {
+        console.error('❌ Orders API error:', response.status, response.statusText);
+        setOrders([]);
+        setTotalPages(1);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -151,11 +156,14 @@ export default function OrderManagement() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Order status updated:', result);
         fetchOrders(); // Refresh orders
-        alert('Cập nhật trạng thái đơn hàng thành công!');
+        alert('✅ Cập nhật trạng thái đơn hàng thành công!');
       } else {
         const errorData = await response.json();
-        alert(`Lỗi: ${errorData.message}`);
+        console.error('❌ Order status update failed:', errorData);
+        alert(`❌ Lỗi: ${errorData.message}`);
       }
     } catch (error) {
       console.error('Error updating order status:', error);
@@ -178,11 +186,14 @@ export default function OrderManagement() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Payment status updated:', result);
         fetchOrders(); // Refresh orders
-        alert('Cập nhật trạng thái thanh toán thành công!');
+        alert('✅ Cập nhật trạng thái thanh toán thành công!');
       } else {
         const errorData = await response.json();
-        alert(`Lỗi: ${errorData.message}`);
+        console.error('❌ Payment status update failed:', errorData);
+        alert(`❌ Lỗi: ${errorData.message}`);
       }
     } catch (error) {
       console.error('Error updating payment status:', error);
@@ -209,10 +220,13 @@ export default function OrderManagement() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log('✅ COD payment updated:', result);
         fetchOrders(); // Refresh orders
         alert('✅ Đã cập nhật trạng thái thanh toán COD thành công!');
       } else {
         const errorData = await response.json();
+        console.error('❌ COD payment update failed:', errorData);
         alert(`❌ Lỗi: ${errorData.message}`);
       }
     } catch (error) {
@@ -435,7 +449,7 @@ export default function OrderManagement() {
             <h2 className="text-lg font-medium text-gray-900">Danh sách đơn hàng</h2>
           </div>
           
-          {orders.length === 0 ? (
+          {!orders || orders.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-500">
                 <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -477,7 +491,7 @@ export default function OrderManagement() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {orders.map((order) => (
+                  {orders && orders.length > 0 && orders.map((order) => (
                     <tr key={order._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
@@ -504,7 +518,7 @@ export default function OrderManagement() {
                             <div key={index} className="flex items-center space-x-2">
                               <img
                                 className="w-8 h-8 object-cover rounded"
-                                src={`https://exe-backend.fly.dev${item.productImage}`}
+                                src={`${buildApiUrl('')}${item.productImage}`}
                                 alt={item.productName}
                                 onError={(e) => {
                                   e.currentTarget.src = '/images/404.svg';

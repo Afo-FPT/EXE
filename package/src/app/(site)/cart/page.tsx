@@ -25,7 +25,7 @@ export default function Cart() {
       return;
     }
     
-    if (cart.items.length === 0) {
+    if (cart.items.filter(item => item.product).length === 0) {
       alert('Giỏ hàng trống!');
       return;
     }
@@ -35,7 +35,7 @@ export default function Cart() {
     window.location.href = '/checkout';
   };
 
-  if (cart.items.length === 0) {
+  if (cart.items.filter(item => item.product).length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Empty Cart */}
@@ -107,7 +107,7 @@ export default function Cart() {
                 <h2 className="text-lg font-medium text-gray-900">Sản phẩm trong giỏ</h2>
               </div>
               <div className="divide-y divide-gray-200">
-                {cart.items.map((item) => {
+                {cart.items.filter(item => item.product).map((item) => {
                   const discountedPrice = item.product.price * (1 - item.product.discountPercent / 100);
                   return (
                     <div key={item.product._id} className="p-6">
@@ -130,29 +130,29 @@ export default function Cart() {
                             {item.product.name}
                           </h3>
                           <p className="text-sm text-gray-500">
-                            {item.product.collection.name}
+                            {item.product.collection?.name || 'Không có collection'}
                           </p>
                           <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                            {item.product.description}
+                            {item.product.description || 'Không có mô tả'}
                           </p>
                           
                           {/* Price */}
                           <div className="mt-2">
-                            {item.product.discountPercent > 0 ? (
+                            {(item.product.discountPercent || 0) > 0 ? (
                               <div className="flex items-center space-x-2">
                                 <span className="text-lg font-bold text-red-600">
                                   {discountedPrice.toLocaleString('vi-VN')} VNĐ
                                 </span>
                                 <span className="text-sm text-gray-500 line-through">
-                                  {item.product.price.toLocaleString('vi-VN')} VNĐ
+                                  {(item.product.price || 0).toLocaleString('vi-VN')} VNĐ
                                 </span>
                                 <span className="text-xs text-red-600 font-medium bg-red-100 px-2 py-1 rounded">
-                                  -{item.product.discountPercent}%
+                                  -{item.product.discountPercent || 0}%
                                 </span>
                               </div>
                             ) : (
                               <span className="text-lg font-bold text-gray-900">
-                                {item.product.price.toLocaleString('vi-VN')} VNĐ
+                                {(item.product.price || 0).toLocaleString('vi-VN')} VNĐ
                               </span>
                             )}
                           </div>

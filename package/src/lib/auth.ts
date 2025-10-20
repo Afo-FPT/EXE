@@ -26,6 +26,9 @@ export async function signup(userData: any) {
       };
     }
     
+    // Connect to database
+    await connectDB();
+    
     // Check if user exists
     const existingUser = await User.findOne({ 
       $or: [{ email }, { username }] 
@@ -85,28 +88,52 @@ export async function signup(userData: any) {
 
 export async function signin(userData: any) {
   try {
+    console.log('🔍 signin function - Starting...');
     const { email, password } = userData;
+    console.log('📝 Signin data:', { email, password: password ? '***' : 'missing' });
     
     // Validation
     if (!email || !password) {
+      console.log('❌ Missing email or password');
       return {
         success: false,
         message: 'Email and password are required'
       };
     }
     
+    // Connect to database
+    console.log('🔗 Connecting to database...');
+    await connectDB();
+    console.log('✅ Database connected');
+    
     // Find user
+    console.log('🔍 Finding user with email:', email);
     const user = await User.findOne({ email });
+    console.log('👤 User found:', user ? 'Yes' : 'No');
+    
     if (!user) {
+      console.log('❌ User not found');
       return {
         success: false,
         message: 'Invalid credentials'
       };
     }
     
+    console.log('👤 User details:', {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      hasPassword: !!user.password
+    });
+    
     // Check password
+    console.log('🔐 Checking password...');
     const isValidPassword = await bcrypt.compare(password, user.password);
+    console.log('🔐 Password valid:', isValidPassword);
+    
     if (!isValidPassword) {
+      console.log('❌ Invalid password');
       return {
         success: false,
         message: 'Invalid credentials'
@@ -115,11 +142,13 @@ export async function signin(userData: any) {
     
     // Ensure username exists (fallback for existing users)
     if (!user.username) {
+      console.log('📝 Setting username from email');
       user.username = user.email.split('@')[0];
       await user.save();
     }
     
     // Generate JWT token
+    console.log('🎫 Generating JWT token...');
     const token = jwt.sign(
       { 
         id: user._id, 
@@ -130,8 +159,9 @@ export async function signin(userData: any) {
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '7d' }
     );
+    console.log('✅ JWT token generated');
     
-    return {
+    const result = {
       success: true,
       message: 'Login successful',
       token,
@@ -142,8 +172,11 @@ export async function signin(userData: any) {
         role: user.role
       }
     };
+    
+    console.log('✅ Signin successful:', result);
+    return result;
   } catch (error) {
-    console.error('Signin error:', error);
+    console.error('❌ Signin error:', error);
     return {
       success: false,
       message: 'Server error'

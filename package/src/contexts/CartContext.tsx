@@ -65,13 +65,20 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'ADD_TO_CART': {
       const { product, quantity } = action.payload;
-      const existingItem = state.items.find(item => item.product._id === product._id);
+      
+      // Validate product data
+      if (!product || !product._id || !product.name) {
+        console.error('Invalid product data:', product);
+        return state;
+      }
+      
+      const existingItem = state.items.find(item => item.product && item.product._id === product._id);
       
       let newItems: CartItem[];
       if (existingItem) {
         // Update existing item
         newItems = state.items.map(item =>
-          item.product._id === product._id
+          item.product && item.product._id === product._id
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
@@ -84,7 +91,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     }
     
     case 'REMOVE_FROM_CART': {
-      const newItems = state.items.filter(item => item.product._id !== action.payload.productId);
+      const newItems = state.items.filter(item => item.product && item.product._id !== action.payload.productId);
       return calculateTotals({ ...state, items: newItems });
     }
     
@@ -95,7 +102,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       }
       
       const newItems = state.items.map(item =>
-        item.product._id === productId
+        item.product && item.product._id === productId
           ? { ...item, quantity }
           : item
       );
@@ -116,13 +123,18 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
 // Helper function to calculate totals
 function calculateTotals(state: CartState): CartState {
-  const totalItems = state.items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = state.items.reduce((sum, item) => {
+    if (!item || !item.product) return sum;
+    return sum + item.quantity;
+  }, 0);
   
   const totalPrice = state.items.reduce((sum, item) => {
+    if (!item || !item.product || !item.product.price) return sum;
     return sum + (item.product.price * item.quantity);
   }, 0);
   
   const totalDiscount = state.items.reduce((sum, item) => {
+    if (!item || !item.product || !item.product.price || !item.product.discountPercent) return sum;
     const discountAmount = item.product.price * (item.product.discountPercent / 100);
     return sum + (discountAmount * item.quantity);
   }, 0);
@@ -164,8 +176,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [cart]);
 
   const addToCart = (product: MysteryBag, quantity: number = 1) => {
+    // Validate product data
+    if (!product || !product._id || !product.name) {
+      console.error('Invalid product data:', product);
+      alert('Dữ liệu sản phẩm không hợp lệ');
+      return;
+    }
+    
     // Check stock availability
-    const existingItem = cart.items.find(item => item.product._id === product._id);
+    const existingItem = cart.items.find(item => item.product && item.product._id === product._id);
     const currentQuantity = existingItem ? existingItem.quantity : 0;
     
     if (currentQuantity + quantity > product.stock) {
@@ -181,7 +200,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
-    const item = cart.items.find(item => item.product._id === productId);
+    const item = cart.items.find(item => item.product && item.product._id === productId);
     if (item && quantity > item.product.stock) {
       alert(`Không thể cập nhật số lượng. Chỉ còn ${item.product.stock} sản phẩm trong kho.`);
       return;
@@ -195,11 +214,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isInCart = (productId: string) => {
-    return cart.items.some(item => item.product._id === productId);
+    return cart.items.some(item => item.product && item.product._id === productId);
   };
 
   const getItemQuantity = (productId: string) => {
-    const item = cart.items.find(item => item.product._id === productId);
+    const item = cart.items.find(item => item.product && item.product._id === productId);
     return item ? item.quantity : 0;
   };
 

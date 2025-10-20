@@ -50,7 +50,7 @@ export default function Checkout() {
       return;
     }
     
-    if (cart.items.length === 0) {
+    if (cart.items.filter(item => item.product).length === 0) {
       alert('Giỏ hàng trống!');
       return;
     }
@@ -85,14 +85,14 @@ export default function Checkout() {
           method: formData.paymentMethod,
           amount: cart.finalPrice,
         },
-        items: cart.items.map(item => ({
+        items: cart.items.filter(item => item.product).map(item => ({
           productId: item.product._id,
           productName: item.product.name,
           productImage: item.product.image,
           quantity: item.quantity,
-          price: item.product.price,
-          discountPercent: item.product.discountPercent,
-          totalPrice: item.product.price * (1 - item.product.discountPercent / 100) * item.quantity,
+          price: item.product.price || 0,
+          discountPercent: item.product.discountPercent || 0,
+          totalPrice: (item.product.price || 0) * (1 - (item.product.discountPercent || 0) / 100) * item.quantity,
         })),
         totalAmount: cart.totalPrice,
         totalItems: cart.totalItems,
@@ -342,13 +342,13 @@ export default function Checkout() {
               <div className="px-6 py-4 space-y-4">
                 {/* Order Items */}
                 <div className="space-y-3">
-                  {cart.items.map((item) => {
-                    const discountedPrice = item.product.price * (1 - item.product.discountPercent / 100);
+                  {cart.items.filter(item => item.product).map((item) => {
+                    const discountedPrice = (item.product.price || 0) * (1 - (item.product.discountPercent || 0) / 100);
                     return (
                       <div key={item.product._id} className="flex items-center space-x-3">
                         <img
                           className="w-12 h-12 object-cover rounded"
-                          src={`https://exe-backend.fly.dev${item.product.image}`}
+                          src={`${buildApiUrl('')}${item.product.image}`}
                           alt={item.product.name}
                           onError={(e) => {
                             e.currentTarget.src = '/images/404.svg';

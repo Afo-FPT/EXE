@@ -117,9 +117,9 @@ export default function CollectionManagementPage() {
         return;
       }
       
-      // Kiểm tra kích thước file (max 4MB để tương thích với Vercel)
-      if (file.size > 4 * 1024 * 1024) {
-        alert('Kích thước file không được vượt quá 4MB! Vercel có giới hạn cứng 4.5MB. Vui lòng nén file hoặc chọn file nhỏ hơn.');
+      // Kiểm tra kích thước file (max 500MB với Vercel Blob)
+      if (file.size > 500 * 1024 * 1024) {
+        alert('Kích thước file không được vượt quá 500MB! Vui lòng chọn file nhỏ hơn.');
         return;
       }
       
@@ -1060,10 +1060,10 @@ export default function CollectionManagementPage() {
                           <p className="pl-1">hoặc kéo thả vào đây</p>
                         </div>
                         <p className="text-xs text-gray-500">
-                          FBX, GLB, GLTF, DAE tối đa 4MB (Vercel limit)
+                          FBX, GLB, GLTF, DAE tối đa 500MB (Vercel Blob)
                         </p>
-                        <p className="text-xs text-yellow-600 mt-1">
-                          💡 File lớn hơn 4MB? Hãy nén file bằng Blender hoặc các công cụ nén 3D
+                        <p className="text-xs text-green-600 mt-1">
+                          ✅ Hỗ trợ file lớn hơn 4MB với Vercel Blob!
                         </p>
                       </div>
                     </div>
