@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import ChessPiece from '@/lib/models/ChessPiece';
-import { put } from '@vercel/blob';
 
 // Increase body size limit for file uploads
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '500mb', // Vercel Blob supports up to 500MB
+      sizeLimit: '50mb', // Reduced back to 50MB for stability
     },
   },
 };
@@ -59,45 +58,18 @@ export async function POST(request: NextRequest) {
       modelName: model3D?.name, modelSize: model3D?.size
     });
     
-    let model3DUrl = '';
-    
-    // Upload 3D model to Vercel Blob if provided
+    // Check file size
     if (model3D && model3D.size > 0) {
       const fileSizeMB = model3D.size / (1024 * 1024);
       console.log(`📁 File size: ${fileSizeMB.toFixed(2)} MB`);
       
-      if (fileSizeMB > 500) {
+      if (fileSizeMB > 50) {
         console.log('❌ File too large:', fileSizeMB, 'MB');
         return NextResponse.json({
           success: false,
-          message: 'File quá lớn! Vui lòng chọn file nhỏ hơn 500MB.',
+          message: 'File quá lớn! Vui lòng chọn file nhỏ hơn 50MB.',
           fileSize: fileSizeMB
         }, { status: 413 });
-      }
-      
-      try {
-        console.log('📁 Uploading 3D model to Vercel Blob...');
-        
-        // Generate unique filename
-        const timestamp = Date.now();
-        const fileExtension = model3D.name.split('.').pop();
-        const fileName = `chess-piece-${timestamp}-${Math.random().toString(36).substring(2)}.${fileExtension}`;
-        
-        // Upload to Vercel Blob
-        const blob = await put(fileName, model3D, {
-          access: 'public',
-        });
-        
-        model3DUrl = blob.url;
-        console.log('✅ 3D model uploaded successfully:', model3DUrl);
-        
-      } catch (uploadError) {
-        console.error('❌ Blob upload error:', uploadError);
-        return NextResponse.json({
-          success: false,
-          message: 'Failed to upload 3D model',
-          error: uploadError instanceof Error ? uploadError.message : 'Unknown error'
-        }, { status: 500 });
       }
     }
     
@@ -112,7 +84,7 @@ export async function POST(request: NextRequest) {
       price: parseFloat(price),
       discountPercent: parseFloat(discountPercent),
       stock: parseInt(stock),
-      model3D: model3DUrl || model3D?.name || ''
+      model3D: model3D?.name || ''
     });
     
     console.log('💾 Saving chess piece to database...');
