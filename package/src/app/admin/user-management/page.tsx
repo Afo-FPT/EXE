@@ -1,4 +1,6 @@
 'use client';
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';

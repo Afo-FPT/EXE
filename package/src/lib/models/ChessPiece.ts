@@ -23,25 +23,19 @@ const chessPieceSchema = new mongoose.Schema({
     trim: true,
     maxlength: 500
   },
-  price: {
-    type: Number,
-    required: true,
-    min: 0
-  },
-  discountPercent: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 100
-  },
-  stock: {
-    type: Number,
-    required: true,
-    min: 0
-  },
   model3D: {
     type: String,
     default: ''
+  },
+  images: {
+    type: [String],
+    default: [],
+    validate: {
+      validator: function(images: string[]) {
+        return images.length <= 4;
+      },
+      message: 'Maximum 4 images allowed'
+    }
   },
   isActive: {
     type: Boolean,

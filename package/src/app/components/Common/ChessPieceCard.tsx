@@ -1,120 +1,169 @@
 'use client'
+
+import { useState } from 'react'
 import Image from 'next/image'
 import { Icon } from '@iconify/react'
+// import ChessPiece3DViewer from '@/app/components/ChessPiece3DViewer' // Disabled 3D viewer
 
 interface ChessPiece {
   _id: string
   name: string
   type: string
-  rarity: string
-  image: string
-  model3D: string
+  collection: string
   description: string
-  dropRate: number
+  model3D: string
+  images: string[]
+  isActive: boolean
+  createdAt: string
 }
 
 interface ChessPieceCardProps {
   piece: ChessPiece
-  onClick: (piece: ChessPiece) => void
+  onClick?: (piece: ChessPiece) => void
+  show3DButton?: boolean
 }
 
-const ChessPieceCard = ({ piece, onClick }: ChessPieceCardProps) => {
-  // Get rarity color
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return 'text-gray-600 bg-gray-100'
-      case 'rare': return 'text-blue-600 bg-blue-100'
-      case 'epic': return 'text-purple-600 bg-purple-100'
-      case 'legendary': return 'text-yellow-600 bg-yellow-100'
-      default: return 'text-gray-600 bg-gray-100'
-    }
-  }
+export default function ChessPieceCard({ piece, onClick, show3DButton = false }: ChessPieceCardProps) {
+  // const [show3DModal, setShow3DModal] = useState(false) // Disabled 3D viewer
 
-  // Get rarity label
-  const getRarityLabel = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return 'Thường'
-      case 'rare': return 'Hiếm'
-      case 'epic': return 'Epic'
-      case 'legendary': return 'Huyền Thoại'
-      default: return rarity
-    }
-  }
-
-  // Get type icon
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'vua': return 'solar:crown-bold'
-      case 'hậu': return 'solar:queen-bold'
-      case 'xe': return 'solar:castle-bold'
-      case 'mã': return 'solar:horse-bold'
-      case 'tượng': return 'solar:bishop-bold'
-      case 'tốt': return 'solar:pawn-bold'
-      default: return 'solar:chess-bold'
+      case 'xe': return '♜'
+      case 'hậu': return '♛'
+      case 'mã': return '♞'
+      case 'tượng': return '♝'
+      case 'tốt': return '♟'
+      case 'vua': return '♚'
+      default: return '♟'
     }
   }
 
+  const getTypeText = (type: string) => {
+    switch (type) {
+      case 'xe': return 'Xe'
+      case 'hậu': return 'Hậu'
+      case 'mã': return 'Mã'
+      case 'tượng': return 'Tượng'
+      case 'tốt': return 'Tốt'
+      case 'vua': return 'Vua'
+      default: return type
+    }
+  }
+
+  // Removed price calculation since we don't have price fields
+
+  const handleCardClick = () => {
+    if (onClick) {
+      onClick(piece)
+    }
+  }
+
+  // Disabled 3D viewer
+  // const handle3DClick = (e: React.MouseEvent) => {
+  //   e.stopPropagation()
+  //   if (piece.model3D) {
+  //     setShow3DModal(true)
+  //   }
+  // }
+
   return (
-    <div
-      className="bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-all duration-300 hover:shadow-md group border-2 border-transparent hover:border-primary/20"
-      onClick={() => onClick(piece)}
-    >
-      {/* Piece Image */}
-      <div className="relative aspect-square mb-3">
-        <Image
-          src={piece.image}
-          alt={piece.name}
-          fill
-          className="object-cover rounded group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            e.currentTarget.src = '/images/Product/demo.png'
-          }}
+    <>
+      <div 
+        className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer group overflow-hidden"
+        onClick={handleCardClick}
+      >
+        {/* Header with type icon */}
+        <div className="relative p-4 bg-gradient-to-br from-blue-50 to-purple-50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-2xl">
+                {getTypeIcon(piece.type)}
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900 text-lg">{piece.name}</h3>
+                <p className="text-sm text-gray-600">{getTypeText(piece.type)}</p>
+              </div>
+            </div>
+            
+            {/* 3D Button - DISABLED */}
+            {/* {show3DButton && piece.model3D && (
+              <button
+                onClick={handle3DClick}
+                className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors opacity-0 group-hover:opacity-100"
+                title="Xem mô hình 3D"
+              >
+                <Icon icon="solar:3d-cube-bold" className="w-5 h-5" />
+              </button>
+            )} */}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-4">
+          {/* Chess Piece Images */}
+          {piece.images && piece.images.length > 0 && (
+            <div className="mb-4">
+              <div className="relative w-full h-32 rounded-lg overflow-hidden bg-gray-100">
+                <Image
+                  src={piece.images[0]}
+                  alt={piece.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              {piece.images.length > 1 && (
+                <div className="mt-2 text-xs text-gray-500">
+                  +{piece.images.length - 1} ảnh khác
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="mb-3">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              {piece.collection}
+            </span>
+          </div>
+
+          <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+            {piece.description}
+          </p>
+
+          {/* Status */}
+          <div className="flex items-center justify-between text-sm text-gray-500">
+            <span className="text-xs text-gray-500">
+              {new Date(piece.createdAt).toLocaleDateString('vi-VN')}
+            </span>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              piece.isActive 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {piece.isActive ? 'Hoạt động' : 'Tạm dừng'}
+            </span>
+          </div>
+
+          {/* 3D Model indicator - DISABLED */}
+          {/* {piece.model3D && (
+            <div className="mt-3 flex items-center text-xs text-blue-600">
+              <Icon icon="solar:3d-cube-bold" className="w-4 h-4 mr-1" />
+              <span>Mô hình 3D có sẵn</span>
+            </div>
+          )} */}
+        </div>
+
+        {/* Hover effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      </div>
+
+      {/* 3D Modal - DISABLED */}
+      {/* {show3DModal && (
+        <ChessPiece3DViewer
+          modelUrl={piece.model3D}
+          pieceName={piece.name}
+          onClose={() => setShow3DModal(false)}
         />
-        
-        {/* Rarity Badge */}
-        <div className="absolute top-2 right-2">
-          <span className={`px-2 py-1 rounded text-xs font-medium ${getRarityColor(piece.rarity)}`}>
-            {getRarityLabel(piece.rarity)}
-          </span>
-        </div>
-
-        {/* Type Icon */}
-        <div className="absolute top-2 left-2">
-          <div className="bg-white/90 rounded-full p-1">
-            <Icon icon={getTypeIcon(piece.type)} className="w-4 h-4 text-gray-700" />
-          </div>
-        </div>
-
-        {/* Drop Rate */}
-        <div className="absolute bottom-2 left-2">
-          <span className="bg-black/70 text-white px-2 py-1 rounded text-xs">
-            {piece.dropRate}%
-          </span>
-        </div>
-      </div>
-
-      {/* Piece Info */}
-      <div className="space-y-2">
-        <h4 className="font-bold text-gray-900 group-hover:text-primary transition-colors">
-          {piece.name}
-        </h4>
-        <p className="text-sm text-gray-600 line-clamp-2">{piece.description}</p>
-        
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500 capitalize font-medium">
-            {piece.type}
-          </span>
-          <div className="flex items-center text-primary text-sm group-hover:text-primary/80 transition-colors">
-            <Icon icon="solar:info-circle-bold" className="w-4 h-4 mr-1" />
-            Chi tiết
-          </div>
-        </div>
-      </div>
-
-      {/* Hover Effect */}
-      <div className="absolute inset-0 bg-primary/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-    </div>
+      )} */}
+    </>
   )
 }
-
-export default ChessPieceCard

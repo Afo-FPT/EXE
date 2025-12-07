@@ -1,40 +1,9 @@
 {
+  "buildCommand": "npm run build",
+  "framework": "nextjs",
   "functions": {
-    "src/app/api/chess-pieces/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/collections/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/collections/[id]/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/collections/public/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/chess-pieces/[id]/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/mystery-bags/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/mystery-bags/public/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/mystery-bags/admin/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/mystery-bags/admin/[id]/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/test/route.ts": {
-      "maxDuration": 10
-    },
-    "src/app/api/signin/route.ts": {
-      "maxDuration": 30
-    },
-    "src/app/api/check-user/route.ts": {
-      "maxDuration": 30
+    "src/app/api/upload/blob/route.js": {
+      "maxDuration": 300
     }
   },
   "headers": [
@@ -57,7 +26,7 @@
     }
   ],
   "env": {
-        "NEXT_PUBLIC_MAX_FILE_SIZE": "52428800",
+    "NEXT_PUBLIC_MAX_FILE_SIZE": "104857600",
     "DB_URI": "mongodb+srv://conculato5_db_user:quanha9948@cluster0.salxuo0.mongodb.net/exe_project?retryWrites=true&w=majority",
     "MONGODB_URI": "mongodb+srv://conculato5_db_user:quanha9948@cluster0.salxuo0.mongodb.net/exe_project?retryWrites=true&w=majority",
     "JWT_SECRET": "your-super-secret-jwt-key-here"

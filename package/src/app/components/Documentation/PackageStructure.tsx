@@ -1,9 +1,6 @@
 import { Icon } from '@iconify/react/dist/iconify.js'
 import Image from 'next/image'
-import tline from '/public/images/svgs/T-Line.svg'
-import t_half_line from '/public/images/svgs/T-half_line.svg'
-import straight_line from '/public/images/svgs/straight_group.svg'
-import small_straight_line from '/public/images/svgs/smal_straight_line.svg'
+// Using string paths instead of imports for Next.js 16 compatibility
 
 export const PackageStructure = () => {
   const Counts = [

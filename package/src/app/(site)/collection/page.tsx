@@ -3,13 +3,13 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Icon } from '@iconify/react'
-import Model3DViewer from '@/app/components/Common/Model3DViewer'
 import CollectionCard from '@/app/components/Common/CollectionCard'
 import ChessPieceCard from '@/app/components/Common/ChessPieceCard'
 import ChessPieceDetail from '@/app/components/Common/ChessPieceDetail'
 import CollectionStats from '@/app/components/Common/CollectionStats'
 import Breadcrumb from '@/app/components/Common/Breadcrumb'
 import FeatureGuide from '@/app/components/Common/FeatureGuide'
+// import Model3DViewer from '@/app/components/Common/Model3DViewer' // Disabled 3D viewer
 import { buildApiUrl } from '@/config/api'
 
 interface Collection {
@@ -17,27 +17,21 @@ interface Collection {
   name: string
   description: string
   coverImage: string
-  theme: string
-  totalChessPieces: number
-  rarityDistribution: {
-    common: number
-    rare: number
-    epic: number
-    legendary: number
-  }
-  releaseDate: string
   isActive: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 interface ChessPiece {
   _id: string
   name: string
   type: string
-  rarity: string
-  image: string
-  model3D: string
+  collection: string
   description: string
-  dropRate: number
+  model3D: string
+  images: string[]
+  isActive: boolean
+  createdAt: string
 }
 
 const CollectionPage = () => {
@@ -46,7 +40,13 @@ const CollectionPage = () => {
   const [chessPieces, setChessPieces] = useState<ChessPiece[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingPieces, setLoadingPieces] = useState(false)
-  const [show3DModal, setShow3DModal] = useState(false)
+  
+  // Debug log for chessPieces state
+  useEffect(() => {
+    console.log('🔄 Chess pieces state updated:', chessPieces)
+    console.log('🎨 Rendering chess pieces:', chessPieces.length, 'pieces')
+  }, [chessPieces])
+  // const [show3DModal, setShow3DModal] = useState(false) // Disabled 3D viewer
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedPiece, setSelectedPiece] = useState<ChessPiece | null>(null)
 
@@ -62,6 +62,11 @@ const CollectionPage = () => {
       
       const data = await response.json()
       console.log('✅ Collections fetched:', data.collections)
+      console.log('📊 Collections with images:', data.collections?.map((c: any) => ({
+        name: c.name,
+        hasImage: !!c.coverImage,
+        imageLength: c.coverImage?.length || 0
+      })))
       setCollections(data.collections || [])
     } catch (error) {
       console.error('❌ Error fetching collections:', error)
@@ -77,15 +82,22 @@ const CollectionPage = () => {
     try {
       setLoadingPieces(true)
       console.log('📡 Fetching chess pieces for collection:', collectionId)
+      console.log('🌐 API URL:', buildApiUrl(`/chess-pieces/collection/${collectionId}`))
       
-      const response = await fetch(`https://exe-backend.fly.dev/api/chess-pieces/collection/${collectionId}`)
+      const response = await fetch(buildApiUrl(`/chess-pieces/collection/${collectionId}`))
+      
+      console.log('📊 Response status:', response.status)
       
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ Response error:', errorText)
         throw new Error('Failed to fetch chess pieces')
       }
       
       const data = await response.json()
-      console.log('✅ Chess pieces fetched:', data.chessPieces)
+      console.log('✅ Chess pieces fetched:', data)
+      console.log('📊 Chess pieces array:', data.chessPieces)
+      console.log('📊 Chess pieces length:', data.chessPieces?.length)
       setChessPieces(data.chessPieces || [])
     } catch (error) {
       console.error('❌ Error fetching chess pieces:', error)
@@ -98,6 +110,7 @@ const CollectionPage = () => {
 
   // Handle collection selection
   const handleCollectionSelect = (collection: Collection) => {
+    console.log('🎯 Collection selected:', collection)
     setSelectedCollection(collection)
     fetchChessPieces(collection._id)
   }
@@ -108,11 +121,11 @@ const CollectionPage = () => {
     setShowDetailModal(true)
   }
 
-  // Handle 3D view from detail modal
-  const handleView3D = () => {
-    setShowDetailModal(false)
-    setShow3DModal(true)
-  }
+  // Handle 3D view from detail modal - DISABLED
+  // const handleView3D = () => {
+  //   setShowDetailModal(false)
+  //   setShow3DModal(true)
+  // }
 
   useEffect(() => {
     fetchCollections()
@@ -126,7 +139,7 @@ const CollectionPage = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-4xl font-bold text-gray-900 mb-2">Bộ Sưu Tập</h1>
-              <p className="text-gray-600">Khám phá các bộ sưu tập quân cờ độc đáo và xem model 3D</p>
+              <p className="text-gray-600">Khám phá các bộ sưu tập quân cờ độc đáo </p>
             </div>
             <Link
               href="/"
@@ -139,13 +152,6 @@ const CollectionPage = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Collection Stats */}
-        <CollectionStats
-          totalCollections={collections.length}
-          totalPieces={collections.reduce((sum, c) => sum + c.totalChessPieces, 0)}
-          activeCollections={collections.filter(c => c.isActive).length}
-        />
-
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -183,7 +189,7 @@ const CollectionPage = () => {
                       Quân Cờ trong "{selectedCollection.name}"
                     </h2>
                     <p className="text-gray-600">
-                      Tổng cộng {selectedCollection.totalChessPieces} quân cờ
+                      Tổng cộng {chessPieces.length} quân cờ
                     </p>
                   </div>
                   <button
@@ -205,14 +211,22 @@ const CollectionPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {chessPieces.map((piece) => (
-                      <ChessPieceCard
-                        key={piece._id}
-                        piece={piece}
-                        onClick={handleChessPieceClick}
-                      />
-                    ))}
+                  <div>
+                    {chessPieces.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">Không có quân cờ nào trong collection này</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {chessPieces.map((piece) => (
+                          <ChessPieceCard
+                            key={piece._id}
+                            piece={piece}
+                            onClick={handleChessPieceClick}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -226,17 +240,17 @@ const CollectionPage = () => {
         <ChessPieceDetail
           piece={selectedPiece}
           onClose={() => setShowDetailModal(false)}
-          onView3D={handleView3D}
+          onView3D={() => {}} // Disabled 3D viewer
         />
       )}
 
-      {/* 3D Model Modal */}
-      {show3DModal && selectedPiece && (
+      {/* 3D Model Modal - DISABLED */}
+      {/* {show3DModal && selectedPiece && (
         <Model3DViewer
           modelUrl={selectedPiece.model3D}
           onClose={() => setShow3DModal(false)}
         />
-      )}
+      )} */}
 
       {/* Feature Guide */}
       <FeatureGuide />

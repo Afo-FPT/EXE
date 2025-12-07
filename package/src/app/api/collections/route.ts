@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
+import { connectDB } from '@/lib/mongodb';
 import Collection from '@/lib/models/Collection';
 
 // GET /api/collections
@@ -36,19 +36,37 @@ export async function POST(request: NextRequest) {
     const description = formData.get('description') as string;
     const coverImage = formData.get('coverImage') as File;
     
-    console.log('Received collection FormData:', {
+    console.log('📝 Received collection FormData:', {
       name, description,
-      coverImageName: coverImage?.name, coverImageSize: coverImage?.size
+      coverImageName: coverImage?.name, coverImageSize: coverImage?.size,
+      coverImageType: coverImage?.type
     });
     
     // Create new collection
+    let coverImageBase64 = '';
+    if (coverImage && coverImage.size > 0) {
+      console.log('🖼️ Processing cover image...');
+      const arrayBuffer = await coverImage.arrayBuffer();
+      coverImageBase64 = `data:${coverImage.type};base64,${Buffer.from(arrayBuffer).toString('base64')}`;
+      console.log('✅ Cover image processed, length:', coverImageBase64.length);
+    } else {
+      console.log('⚠️ No cover image provided or empty file');
+    }
+    
+    console.log('💾 Creating collection with data:', {
+      name, description,
+      hasCoverImage: !!coverImageBase64,
+      coverImageLength: coverImageBase64.length
+    });
+    
     const newCollection = new Collection({
       name,
       description,
-      coverImage: coverImage?.name || ''
+      coverImage: coverImageBase64
     });
     
     await newCollection.save();
+    console.log('✅ Collection saved to database:', newCollection._id);
     
     return NextResponse.json({
       success: true,

@@ -12,28 +12,40 @@ const Expert = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Sử dụng data tĩnh thay vì fetch API
+    // Data tĩnh cho bộ sưu tập Hào Khí Lạc Việt
     const staticProductData = [
       {
         id: 1,
-        name: "Sản phẩm 1",
-        description: "Nhân vật chiến binh với trang phục truyền thống",
-        imgSrc: "/images/hero/sp1.png"
+        name: 'Cao Lỗ',
+        description: 'Vị tướng tài ba với tài nghệ chế tạo nỏ thần.',
+        imgSrc: '/uploads/hk-lac-viet/cao-lo.jpg',
       },
       {
         id: 2,
-        name: "Sản phẩm 2",
-        description: "Chiến binh với đầu hổ và trang phục cổ điển", 
-        imgSrc: "/images/hero/sp2.png"
+        name: 'Mị Nương',
+        description: 'Công chúa với nét đẹp dịu dàng và lòng thuỷ chung.',
+        imgSrc: '/uploads/hk-lac-viet/mi-nuong.jpg',
       },
       {
         id: 3,
-        name: "Sản phẩm 3",
-        description: "Nữ chiến binh với trang phục truyền thống",
-        imgSrc: "/images/hero/sp3.png"
-      }
+        name: 'Sơn Tinh',
+        description: 'Thần núi uy dũng, biểu tượng sức mạnh thiên nhiên.',
+        imgSrc: '/uploads/hk-lac-viet/son-tinh.jpg',
+      },
+      {
+        id: 4,
+        name: 'Thánh Gióng',
+        description: 'Anh hùng cưỡi ngựa sắt, biểu tượng của lòng yêu nước.',
+        imgSrc: '/uploads/hk-lac-viet/thanh-giong.jpg',
+      },
+      {
+        id: 5,
+        name: 'Vua Hùng',
+        description: 'Bậc minh quân khai quốc, người dựng nên văn hiến Lạc Việt.',
+        imgSrc: '/uploads/hk-lac-viet/vua-hung.jpg',
+      },
     ]
-    
+
     setProduct(staticProductData)
     setLoading(false)
   }, [])

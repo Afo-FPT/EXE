@@ -18,36 +18,51 @@ const HeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
 
   console.log(path)
 
+  const isExternal = item.href.startsWith('http')
+  const contentClass = `text-lg flex font-medium duration-300 ${
+    path === item.href ? 'text-primary' : ' text-black/50 hover:text-primary'
+  }`
+
+  const linkContent = (
+    <>
+      {item.label}
+      {item.submenu && (
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          width='1.5em'
+          height='1.5em'
+          viewBox='0 0 24 24'>
+          <path
+            fill='none'
+            stroke='currentColor'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            strokeWidth='1.5'
+            d='m7 10l5 5l5-5'
+          />
+        </svg>
+      )}
+    </>
+  )
+
   return (
     <div
       className='relative'
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}>
-      <Link
-        href={item.href}
-        className={`text-lg flex font-medium duration-300  ${
-          path === item.href
-            ? 'text-primary '
-            : ' text-black/50  hover:text-primary'
-        }`}>
-        {item.label}
-        {item.submenu && (
-          <svg
-            xmlns='http://www.w3.org/2000/svg'
-            width='1.5em'
-            height='1.5em'
-            viewBox='0 0 24 24'>
-            <path
-              fill='none'
-              stroke='currentColor'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth='1.5'
-              d='m7 10l5 5l5-5'
-            />
-          </svg>
-        )}
-      </Link>
+      {isExternal ? (
+        <a
+          href={item.href}
+          target='_blank'
+          rel='noopener noreferrer'
+          className={contentClass}>
+          {linkContent}
+        </a>
+      ) : (
+        <Link href={item.href} className={contentClass}>
+          {linkContent}
+        </Link>
+      )}
       {submenuOpen && (
         <div
           className={`absolute py-2 left-0 mt-0.5 w-60 bg-white shadow-lg rounded-lg `}

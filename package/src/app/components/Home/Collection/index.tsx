@@ -103,11 +103,7 @@ const Gallery = () => {
           </Masonry>
         </div>
         <div className='flex justify-center'>
-          <button
-            className='px-6 py-2 border border-primary rounded-full text-base font-medium text-white bg-primary hover:bg-primary/20 hover:text-primary hover:cursor-pointer transition ease-in-out duration-300'
-            onClick={openMenu}>
-            Xem Thêm
-          </button>
+          
           {/* menu pop-up */}
           {isMenuOpen && (
             <div

@@ -16,8 +16,9 @@ interface Model3DViewerProps {
 const Model3D = ({ url }: { url: string }) => {
   const [error, setError] = useState(false)
   
-  // Construct full URL if it's a relative path
-  const fullUrl = url.startsWith('http') ? url : `${buildApiUrl('')}${url}`
+  // Construct full URL if it's a relative path (use current origin)
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const fullUrl = url.startsWith('http') ? url : `${origin}${url}`
   
   // Load GLTF model
   const { scene } = useGLTF(fullUrl)
@@ -58,8 +59,9 @@ const FBXModel = ({ url }: { url: string }) => {
   useEffect(() => {
     const loader = new FBXLoader()
     
-    // Construct full URL if it's a relative path
-    const fullUrl = url.startsWith('http') ? url : `https://exe-backend.fly.dev${url}`
+    // Construct full URL if it's a relative path (use current origin)
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const fullUrl = url.startsWith('http') ? url : `${origin}${url}`
     
     loader.load(
       fullUrl,
@@ -130,8 +132,9 @@ const Model3DViewer = ({ modelUrl, onClose }: Model3DViewerProps) => {
   const isFBX = modelUrl.toLowerCase().includes('.fbx')
 
   useEffect(() => {
-    // Construct full URL if it's a relative path
-    const fullUrl = modelUrl.startsWith('http') ? modelUrl : `https://exe-backend.fly.dev${modelUrl}`
+    // Construct full URL if it's a relative path (use current origin)
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const fullUrl = modelUrl.startsWith('http') ? modelUrl : `${origin}${modelUrl}`
     
     // Test if the model URL is accessible
     fetch(fullUrl, { 
@@ -183,7 +186,7 @@ const Model3DViewer = ({ modelUrl, onClose }: Model3DViewerProps) => {
                 <div className="text-center">
                   <Icon icon="solar:close-circle-bold" className="w-16 h-16 text-red-500 mx-auto mb-4" />
                   <p className="text-gray-600 mb-4">Không thể tải model 3D</p>
-                  <p className="text-sm text-gray-500 mb-4">URL: {modelUrl.startsWith('http') ? modelUrl : `https://exe-backend.fly.dev${modelUrl}`}</p>
+                  <p className="text-sm text-gray-500 mb-4">URL: {modelUrl.startsWith('http') ? modelUrl : `${typeof window !== 'undefined' ? window.location.origin : ''}${modelUrl}`}</p>
                 </div>
               </div>
             ) : (

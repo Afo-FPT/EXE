@@ -1,4 +1,6 @@
 'use client';
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 import { useState, useEffect } from 'react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -7,15 +9,20 @@ import Link from 'next/link';
 import AdminNavigation from '@/app/components/AdminNavigation';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { buildApiUrl } from '@/config/api';
+// import { uploadToVercelBlob } from '@/app/api/upload/blob/client-upload';
 
 interface ChessPiece {
   _id: string;
   name: string;
   type: 'xe' | 'hậu' | 'mã' | 'tượng' | 'tốt' | 'vua';
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
-  image: string;
-  model3D?: string; // Thêm field model3D
+  collection: string;
   description: string;
+  price: number;
+  discountPercent: number;
+  stock: number;
+  model3D: string;
+  isActive: boolean;
+  createdAt: string;
 }
 
 interface Collection {
@@ -59,16 +66,20 @@ export default function CollectionManagementPage() {
   });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedPieceImage, setSelectedPieceImage] = useState<File | null>(null);
+  const [pieceImagePreview, setPieceImagePreview] = useState<string | null>(null);
   const [selected3DFile, setSelected3DFile] = useState<File | null>(null);
   const [model3DPreview, setModel3DPreview] = useState<string | null>(null);
+  const [model3DBlobUrl, setModel3DBlobUrl] = useState<string | null>(null);
+  const [model3DUrl, setModel3DUrl] = useState<string>('');
+  const [useUrlInput, setUseUrlInput] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploading3D, setIsUploading3D] = useState(false);
   const [pieceFormData, setPieceFormData] = useState({
     name: '',
     type: 'xe' as const,
-    rarity: 'common' as const,
-    description: '',
-    dropRate: 10
+    description: ''
   });
 
   useEffect(() => {
@@ -104,24 +115,47 @@ export default function CollectionManagementPage() {
     }
   };
 
+  // Xử lý chọn ảnh quân cờ
+  const handlePieceImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Kiểm tra loại file
+      if (!file.type.startsWith('image/')) {
+        alert('Vui lòng chọn file ảnh!');
+        return;
+      }
+      
+      // Kiểm tra kích thước file (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Kích thước file không được vượt quá 5MB!');
+        return;
+      }
+      
+      setSelectedPieceImage(file);
+      
+      // Tạo preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPieceImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Xử lý chọn file 3D
   const handle3DFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Kiểm tra loại file 3D
-      const allowedExtensions = ['.fbx', '.glb', '.gltf', '.dae'];
+      const allowedExtensions = ['.fbx', '.glb', '.gltf', '.dae', '.obj'];
       const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
       
       if (!allowedExtensions.includes(fileExtension)) {
-        alert('Vui lòng chọn file 3D với định dạng: FBX, GLB, GLTF, DAE!');
+        alert('Vui lòng chọn file 3D với định dạng: FBX, GLB, GLTF, DAE, OBJ!');
         return;
       }
       
-      // Kiểm tra kích thước file (max 50MB)
-      if (file.size > 50 * 1024 * 1024) {
-        alert('Kích thước file không được vượt quá 50MB! Vui lòng chọn file nhỏ hơn.');
-        return;
-      }
+      // Không giới hạn 10MB khi host EC2. Có thể xử lý file lớn (khuyến nghị < 200MB)
       
       console.log('📁 Selected 3D file:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
       
@@ -133,12 +167,137 @@ export default function CollectionManagementPage() {
   const clear3DFile = () => {
     setSelected3DFile(null);
     setModel3DPreview(null);
+    setModel3DBlobUrl(null);
+    setModel3DUrl('');
+    setUseUrlInput(false);
+  };
+
+  // Xử lý URL input cho 3D model
+  const handle3DUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setModel3DUrl(url);
+    
+    if (url) {
+      setModel3DPreview(url);
+      setSelected3DFile(null); // Clear file selection
+    }
+  };
+
+  // Validate 3D URL
+  const validate3DUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      const allowedExtensions = ['.glb', '.gltf', '.obj', '.fbx', '.dae'];
+      const pathname = urlObj.pathname.toLowerCase();
+      
+      return allowedExtensions.some(ext => pathname.endsWith(ext));
+    } catch {
+      return false;
+    }
+  };
+
+  // Upload 3D model to Vercel Blob using server-side upload
+  const upload3DModelToBlob = async (file: File, collectionName: string): Promise<string | null> => {
+    try {
+      setIsUploading3D(true);
+      setUploadProgress(0);
+
+      console.log('🚀 Server-side upload to Vercel Blob...', {
+        fileName: file.name,
+        fileSize: (file.size / 1024 / 1024).toFixed(2) + 'MB',
+        collection: collectionName
+      });
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('collection', collectionName);
+
+      // Progress simulation
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 500);
+
+      const response = await fetch(buildApiUrl('/upload/blob'), {
+        method: 'POST',
+        body: formData,
+      });
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      const result = await response.json();
+      console.log('✅ 3D model uploaded successfully:', result);
+      return result.url;
+    } catch (error) {
+      console.error('❌ 3D model upload error:', error);
+      alert(`Lỗi upload 3D model: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return null;
+    } finally {
+      setIsUploading3D(false);
+      setUploadProgress(0);
+    }
   };
 
   // Xóa ảnh đã chọn
   const clearImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
+  };
+
+  // State for multiple chess piece images
+  const [selectedPieceImages, setSelectedPieceImages] = useState<File[]>([]);
+  const [pieceImagePreviews, setPieceImagePreviews] = useState<string[]>([]);
+
+  // Handle multiple piece image selection
+  const handlePieceImagesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    if (files.length > 4) {
+      alert('Tối đa chỉ được chọn 4 ảnh!');
+      return;
+    }
+
+    // Validate file sizes (increased limit for EC2)
+    const validFiles = files.filter(file => {
+      const fileSizeMB = file.size / (1024 * 1024);
+      if (fileSizeMB > 50) {
+        alert(`Ảnh "${file.name}" quá lớn! Vui lòng chọn ảnh nhỏ hơn 50MB.`);
+        return false;
+      }
+      return true;
+    });
+
+    setSelectedPieceImages(validFiles);
+    
+    // Create previews
+    const previews: string[] = [];
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previews.push(e.target?.result as string);
+        if (previews.length === validFiles.length) {
+          setPieceImagePreviews(previews);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Xóa tất cả ảnh quân cờ đã chọn
+  const clearPieceImages = () => {
+    setSelectedPieceImages([]);
+    setPieceImagePreviews([]);
+  };
+
+  // Xóa ảnh quân cờ đã chọn (legacy - keeping for compatibility)
+  const clearPieceImage = () => {
+    setSelectedPieceImage(null);
+    setPieceImagePreview(null);
   };
 
   const fetchCollections = async () => {
@@ -231,6 +390,12 @@ export default function CollectionManagementPage() {
     e.preventDefault();
     if (!selectedCollection) return;
 
+    // Validate required fields
+    if (!pieceFormData.name.trim()) {
+      alert('Vui lòng nhập tên quân cờ!');
+      return;
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
 
@@ -239,19 +404,33 @@ export default function CollectionManagementPage() {
       console.log('🎯 Adding to collection:', selectedCollection._id);
       console.log('📁 3D File selected:', selected3DFile?.name);
       
-      // Sử dụng FormData để gửi file 3D
+      // Sử dụng FormData để gửi file 3D và ảnh
       const formData = new FormData();
       formData.append('name', pieceFormData.name);
       formData.append('type', pieceFormData.type);
-      formData.append('rarity', pieceFormData.rarity);
+      formData.append('collection', selectedCollection._id);
       formData.append('description', pieceFormData.description);
-      formData.append('dropRate', pieceFormData.dropRate.toString());
-      formData.append('image', 'https://via.placeholder.com/100x100?text=Chess+Piece'); // Tạm thời dùng placeholder
-      formData.append('collectionId', selectedCollection._id);
       
-      // Thêm file 3D nếu có
+      // Thêm nhiều ảnh quân cờ nếu có
+      if (selectedPieceImages.length > 0) {
+        selectedPieceImages.forEach((image, index) => {
+          formData.append(`image${index}`, image);
+          console.log(`📸 Adding piece image ${index + 1}:`, image.name);
+        });
+      }
+      
+      // Handle 3D model (prefer direct file upload to EC2 storage)
       if (selected3DFile) {
-        formData.append('model3D', selected3DFile);
+        console.log('📦 Attaching 3D model file to FormData (server will store it locally)...');
+        formData.append('model3DFile', selected3DFile);
+      } else if (model3DUrl && model3DUrl.trim()) {
+        // Use provided URL
+        if (!validate3DUrl(model3DUrl)) {
+          alert('URL không hợp lệ hoặc không phải file 3D! Vui lòng kiểm tra lại.');
+          return;
+        }
+        console.log('🔗 Using provided 3D model URL:', model3DUrl);
+        formData.append('model3D', model3DUrl);
       }
       
       console.log('📡 Sending chess piece data with FormData');
@@ -278,7 +457,7 @@ export default function CollectionManagementPage() {
       console.log('📡 Response headers:', response.headers);
 
       if (response.status === 413) {
-        alert('File quá lớn! Vercel có giới hạn cứng 4.5MB. Vui lòng chọn file nhỏ hơn 4MB hoặc nén file trước khi upload.');
+        alert('File quá lớn! Vui lòng chọn file nhỏ hơn 100MB hoặc nén file trước khi upload.');
         return;
       }
 
@@ -289,8 +468,9 @@ export default function CollectionManagementPage() {
           console.log('✅ Chess piece added successfully:', data);
           alert('Thêm quân cờ thành công!');
           setShowAddPieceForm(false);
-          setPieceFormData({ name: '', type: 'xe', rarity: 'common', description: '', dropRate: 10 });
+          setPieceFormData({ name: '', type: 'xe', description: '' });
           clear3DFile(); // Xóa file 3D đã chọn
+          clearPieceImages(); // Xóa tất cả ảnh quân cờ đã chọn
           fetchCollections();
         } else {
           console.error('❌ Response is not JSON:', contentType);
@@ -968,35 +1148,20 @@ export default function CollectionManagementPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Loại</label>
-                      <select
-                        value={pieceFormData.type}
-                        onChange={(e) => setPieceFormData({ ...pieceFormData, type: e.target.value as any })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="xe">Xe</option>
-                        <option value="hậu">Hậu</option>
-                        <option value="mã">Mã</option>
-                        <option value="tượng">Tượng</option>
-                        <option value="tốt">Tốt</option>
-                        <option value="vua">Vua</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Độ hiếm</label>
-                      <select
-                        value={pieceFormData.rarity}
-                        onChange={(e) => setPieceFormData({ ...pieceFormData, rarity: e.target.value as any })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="common">Thường</option>
-                        <option value="rare">Hiếm</option>
-                        <option value="epic">Epic</option>
-                        <option value="legendary">Huyền thoại</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Loại</label>
+                    <select
+                      value={pieceFormData.type}
+                      onChange={(e) => setPieceFormData({ ...pieceFormData, type: e.target.value as any })}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="xe">Xe</option>
+                      <option value="hậu">Hậu</option>
+                      <option value="mã">Mã</option>
+                      <option value="tượng">Tượng</option>
+                      <option value="tốt">Tốt</option>
+                      <option value="vua">Vua</option>
+                    </select>
                   </div>
 
                   <div>
@@ -1010,24 +1175,148 @@ export default function CollectionManagementPage() {
                     />
                   </div>
 
+                  {/* Upload Nhiều Ảnh Quân Cờ */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Drop Rate (%)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={pieceFormData.dropRate}
-                      onChange={(e) => setPieceFormData({ ...pieceFormData, dropRate: Number(e.target.value) })}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="10"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Tỷ lệ rơi của quân cờ (càng hiếm càng thấp)</p>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ảnh quân cờ (Tối đa 4 ảnh)
+                    </label>
+                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
+                      <div className="space-y-1 text-center">
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 48 48"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                          />
+                        </svg>
+                        <div className="flex text-sm text-gray-600">
+                          <label
+                            htmlFor="piece-images-file"
+                            className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                          >
+                            <span>Chọn nhiều ảnh quân cờ</span>
+                            <input
+                              id="piece-images-file"
+                              name="piece-images-file"
+                              type="file"
+                              className="sr-only"
+                              accept="image/*"
+                              multiple
+                              onChange={handlePieceImagesSelect}
+                            />
+                          </label>
+                          <p className="pl-1">hoặc kéo thả vào đây</p>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          PNG, JPG, JPEG tối đa 5MB mỗi ảnh
+                        </p>
+                        <p className="text-xs text-blue-600">
+                          Đã chọn: {selectedPieceImages.length}/4 ảnh
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Preview Nhiều Ảnh Quân Cờ */}
+                    {pieceImagePreviews.length > 0 && (
+                      <div className="mt-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          {pieceImagePreviews.map((preview, index) => (
+                            <div key={index} className="relative">
+                              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                                <div className="flex items-center">
+                                  <div className="flex-shrink-0">
+                                    <img
+                                      src={preview}
+                                      alt={`Piece preview ${index + 1}`}
+                                      className="h-12 w-12 object-cover rounded"
+                                    />
+                                  </div>
+                                  <div className="ml-3">
+                                    <p className="text-sm font-medium text-green-900">
+                                      Ảnh {index + 1}
+                                    </p>
+                                    <p className="text-xs text-green-600">
+                                      {selectedPieceImages[index] ? (selectedPieceImages[index].size / 1024 / 1024).toFixed(2) + 'MB' : ''}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Clear all button */}
+                        <div className="mt-3 flex justify-center">
+                          <button
+                            type="button"
+                            onClick={clearPieceImages}
+                            className="text-sm text-red-600 hover:text-red-800 transition-colors"
+                          >
+                            Xóa tất cả ảnh
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
+
 
                   {/* Upload File 3D */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Mô hình 3D (Tùy chọn)</label>
-                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
+                    
+                    {/* Toggle between file upload and URL input */}
+                    <div className="flex space-x-4 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setUseUrlInput(false)}
+                        className={`px-3 py-1 text-sm rounded ${
+                          !useUrlInput 
+                            ? 'bg-blue-600 text-white' 
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        Upload File
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUseUrlInput(true)}
+                        className={`px-3 py-1 text-sm rounded ${
+                          useUrlInput 
+                            ? 'bg-blue-600 text-white' 
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        Nhập URL
+                      </button>
+                    </div>
+                    
+                    {/* URL Input */}
+                    {useUrlInput ? (
+                      <div className="mt-1">
+                        <input
+                          type="url"
+                          value={model3DUrl}
+                          onChange={handle3DUrlChange}
+                          className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="https://example.com/model.glb"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Nhập URL trực tiếp đến file 3D (GLB, GLTF, OBJ, FBX, DAE)
+                        </p>
+                        {model3DUrl && !validate3DUrl(model3DUrl) && (
+                          <p className="text-xs text-red-500 mt-1">
+                            ⚠️ URL không hợp lệ hoặc không phải file 3D
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
                       <div className="space-y-1 text-center">
                         <svg
                           className="mx-auto h-12 w-12 text-gray-400"
@@ -1053,20 +1342,28 @@ export default function CollectionManagementPage() {
                               name="3d-model-file"
                               type="file"
                               className="sr-only"
-                              accept=".fbx,.glb,.gltf,.dae"
+                              accept=".fbx,.glb,.gltf,.dae,.obj"
                               onChange={handle3DFileSelect}
                             />
                           </label>
                           <p className="pl-1">hoặc kéo thả vào đây</p>
                         </div>
                         <p className="text-xs text-gray-500">
-                          FBX, GLB, GLTF, DAE tối đa 50MB
+                          FBX, GLB, GLTF, DAE, OBJ. Khuyến nghị &lt; 200MB để tải nhanh.
                         </p>
-                        <p className="text-xs text-blue-600 mt-1">
-                          💡 File lớn hơn 50MB? Hãy nén file bằng Blender hoặc các công cụ nén 3D
-                        </p>
+                        <details className="mt-2">
+                          <summary className="text-xs text-blue-600 cursor-pointer hover:text-blue-800">
+                            💡 Cách nén file 3D
+                          </summary>
+                          <div className="text-xs text-gray-600 mt-1 p-2 bg-gray-50 rounded">
+                            <p><strong>GLB/GLTF:</strong> Sử dụng gltf-pipeline hoặc Blender để nén</p>
+                            <p><strong>FBX:</strong> Export với compression trong Maya/3ds Max</p>
+                            <p><strong>OBJ:</strong> Sử dụng MeshLab để giảm polygon count</p>
+                          </div>
+                        </details>
                       </div>
                     </div>
+                    )}
                     
                     {/* Preview File 3D */}
                     {model3DPreview && (
@@ -1079,8 +1376,15 @@ export default function CollectionManagementPage() {
                               </svg>
                             </div>
                             <div className="ml-3">
-                              <p className="text-sm font-medium text-blue-900">{model3DPreview}</p>
-                              <p className="text-xs text-blue-600">File 3D đã chọn</p>
+                              <p className="text-sm font-medium text-blue-900">
+                                {useUrlInput ? 'URL 3D Model' : model3DPreview}
+                              </p>
+                              <p className="text-xs text-blue-600">
+                                {useUrlInput 
+                                  ? `URL: ${model3DUrl}` 
+                                  : `File 3D đã chọn (${selected3DFile ? (selected3DFile.size / 1024 / 1024).toFixed(2) + 'MB' : ''})`
+                                }
+                              </p>
                             </div>
                           </div>
                           <button
@@ -1098,10 +1402,10 @@ export default function CollectionManagementPage() {
                   </div>
 
                   {/* Progress Bar */}
-                  {isUploading && (
+                  {(isUploading || isUploading3D) && (
                     <div className="pt-4">
                       <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                        <span>Đang upload...</span>
+                        <span>{isUploading3D ? 'Đang upload 3D model...' : 'Đang upload...'}</span>
                         <span>{uploadProgress}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
@@ -1125,9 +1429,9 @@ export default function CollectionManagementPage() {
                     <button
                       type="submit"
                       className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={isUploading}
+                      disabled={isUploading || isUploading3D}
                     >
-                      {isUploading ? 'Đang upload...' : 'Thêm Quân Cờ'}
+                      {(isUploading || isUploading3D) ? 'Đang upload...' : 'Thêm Quân Cờ'}
                     </button>
                   </div>
                 </form>

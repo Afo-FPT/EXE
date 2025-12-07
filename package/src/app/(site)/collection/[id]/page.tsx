@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Icon } from '@iconify/react'
 import ChessPieceCard from '@/app/components/Common/ChessPieceCard'
 import ChessPieceDetail from '@/app/components/Common/ChessPieceDetail'
-import Model3DViewer from '@/app/components/Common/Model3DViewer'
+// import Model3DViewer from '@/app/components/Common/Model3DViewer' // Disabled 3D viewer
 import FeatureGuide from '@/app/components/Common/FeatureGuide'
 import { buildApiUrl } from '@/config/api'
 
@@ -32,11 +32,12 @@ interface ChessPiece {
   _id: string
   name: string
   type: string
-  rarity: string
-  image: string
-  model3D: string
+  collection: string
   description: string
-  dropRate: number
+  model3D: string
+  images: string[]
+  isActive: boolean
+  createdAt: string
 }
 
 const CollectionDetailPage = () => {
@@ -47,7 +48,7 @@ const CollectionDetailPage = () => {
   const [chessPieces, setChessPieces] = useState<ChessPiece[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingPieces, setLoadingPieces] = useState(false)
-  const [show3DModal, setShow3DModal] = useState(false)
+  // const [show3DModal, setShow3DModal] = useState(false) // Disabled 3D viewer
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedPiece, setSelectedPiece] = useState<ChessPiece | null>(null)
 
@@ -103,11 +104,11 @@ const CollectionDetailPage = () => {
     setShowDetailModal(true)
   }
 
-  // Handle 3D view from detail modal
-  const handleView3D = () => {
-    setShowDetailModal(false)
-    setShow3DModal(true)
-  }
+  // Handle 3D view from detail modal - DISABLED
+  // const handleView3D = () => {
+  //   setShowDetailModal(false)
+  //   setShow3DModal(true)
+  // }
 
   useEffect(() => {
     if (collectionId) {
@@ -282,17 +283,17 @@ const CollectionDetailPage = () => {
         <ChessPieceDetail
           piece={selectedPiece}
           onClose={() => setShowDetailModal(false)}
-          onView3D={handleView3D}
+          onView3D={() => {}} // Disabled 3D viewer
         />
       )}
 
-      {/* 3D Model Modal */}
-      {show3DModal && selectedPiece && (
+      {/* 3D Model Modal - DISABLED */}
+      {/* {show3DModal && selectedPiece && (
         <Model3DViewer
           modelUrl={selectedPiece.model3D}
           onClose={() => setShow3DModal(false)}
         />
-      )}
+      )} */}
 
       {/* Feature Guide */}
       <FeatureGuide />

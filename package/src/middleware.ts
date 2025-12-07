@@ -24,7 +24,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Temporarily disable middleware to test
-// export const config = {
-//   matcher: '/api/:path*',
-// };
+// Limit middleware to API routes only
+export const config = {
+  matcher: ['/api/:path*'],
+};

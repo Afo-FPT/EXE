@@ -6,11 +6,12 @@ interface ChessPiece {
   _id: string
   name: string
   type: string
-  rarity: string
-  image: string
-  model3D: string
+  collection: string
   description: string
-  dropRate: number
+  model3D: string
+  images: string[]
+  isActive: boolean
+  createdAt: string
 }
 
 interface ChessPieceDetailProps {
@@ -20,27 +21,7 @@ interface ChessPieceDetailProps {
 }
 
 const ChessPieceDetail = ({ piece, onClose, onView3D }: ChessPieceDetailProps) => {
-  // Get rarity color
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return 'text-gray-600 bg-gray-100'
-      case 'rare': return 'text-blue-600 bg-blue-100'
-      case 'epic': return 'text-purple-600 bg-purple-100'
-      case 'legendary': return 'text-yellow-600 bg-yellow-100'
-      default: return 'text-gray-600 bg-gray-100'
-    }
-  }
-
-  // Get rarity label
-  const getRarityLabel = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return 'Thường'
-      case 'rare': return 'Hiếm'
-      case 'epic': return 'Epic'
-      case 'legendary': return 'Huyền Thoại'
-      default: return rarity
-    }
-  }
+  // Removed price calculation since we don't have price fields
 
   // Get type icon
   const getTypeIcon = (type: string) => {
@@ -69,87 +50,177 @@ const ChessPieceDetail = ({ piece, onClose, onView3D }: ChessPieceDetailProps) =
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-xl max-w-4xl w-full my-8 overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h3 className="text-xl font-bold text-gray-900">Chi tiết quân cờ</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <Icon icon="solar:close-circle-bold" className="w-6 h-6" />
-          </button>
+        <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <Icon icon={getTypeIcon(piece.type)} className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">Chi tiết Quân Cờ</h2>
+                <p className="text-blue-100">Thông tin chi tiết về quân cờ</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white/80 hover:text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+            >
+              <Icon icon="solar:close-circle-bold" className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Image */}
-            <div className="space-y-4">
-              <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
-                <Image
-                  src={piece.image}
-                  alt={piece.name}
-                  fill
-                  className="object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = '/images/Product/demo.png'
-                  }}
-                />
+        <div className="p-6 overflow-y-auto max-h-[calc(95vh-200px)]">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Left Column - Image and 3D */}
+            <div className="xl:col-span-1 space-y-4">
+              {/* Main Image */}
+              <div className="relative group">
+                <div className="relative aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200">
+                  {piece.images && piece.images.length > 0 ? (
+                    <Image
+                      src={piece.images[0]}
+                      alt={piece.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <Icon icon={getTypeIcon(piece.type)} className="w-24 h-24 text-gray-400" />
+                    </div>
+                  )}
+                </div>
                 
-                {/* Rarity Badge */}
-                <div className="absolute top-4 right-4">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRarityColor(piece.rarity)}`}>
-                    {getRarityLabel(piece.rarity)}
+                {/* Status Badge */}
+                <div className="absolute top-3 right-3">
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium shadow-lg ${
+                    piece.isActive 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-red-500 text-white'
+                  }`}>
+                    {piece.isActive ? 'Hoạt động' : 'Không hoạt động'}
                   </span>
                 </div>
 
-                {/* Type Icon */}
-                <div className="absolute top-4 left-4">
-                  <div className="bg-white/90 rounded-full p-2">
-                    <Icon icon={getTypeIcon(piece.type)} className="w-6 h-6 text-gray-700" />
+              </div>
+
+              {/* Image Gallery */}
+              {piece.images && piece.images.length > 1 && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-gray-700">Thêm ảnh khác:</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {piece.images.slice(1, 5).map((image, index) => (
+                      <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                        <Image
+                          src={image}
+                          alt={`${piece.name} - Ảnh ${index + 2}`}
+                          fill
+                          className="object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Right Column - Details */}
+            <div className="xl:col-span-2 space-y-6">
+              {/* Basic Info Card */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-white rounded-lg shadow-sm">
+                    <Icon icon={getTypeIcon(piece.type)} className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">{piece.name}</h3>
+                    <p className="text-lg text-gray-600">{getTypeLabel(piece.type)}</p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    <Icon icon="solar:calendar-bold" className="w-4 h-4 mr-1" />
+                    {new Date(piece.createdAt).toLocaleDateString('vi-VN')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Description Card */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <Icon icon="solar:text-bold" className="w-5 h-5 text-gray-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Mô tả</h3>
+                </div>
+                <p className="text-gray-700 leading-relaxed">{piece.description}</p>
+              </div>
+
+              {/* Technical Info Card */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <Icon icon="solar:settings-bold" className="w-5 h-5 text-gray-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Thông tin kỹ thuật</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Icon icon="solar:tag-bold" className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <p className="text-sm text-gray-500">Loại quân cờ</p>
+                      <p className="font-medium text-gray-900">{getTypeLabel(piece.type)}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Icon icon="solar:calendar-bold" className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <p className="text-sm text-gray-500">Ngày tạo</p>
+                      <p className="font-medium text-gray-900">
+                        {new Date(piece.createdAt).toLocaleDateString('vi-VN', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {/* 3D View Button */}
-              <button
-                onClick={onView3D}
-                className="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
-              >
-                <Icon icon="solar:cube-bold" className="w-5 h-5" />
-                Xem Model 3D
-              </button>
             </div>
+          </div>
+        </div>
 
-            {/* Details */}
-            <div className="space-y-6">
-              {/* Basic Info */}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{piece.name}</h2>
-                <p className="text-gray-600 text-lg">{getTypeLabel(piece.type)}</p>
-              </div>
-
-              {/* Description */}
-              <div>
-                <h3 className="font-bold text-gray-900 mb-2">Mô tả</h3>
-                <p className="text-gray-600">{piece.description || 'Chưa có mô tả chi tiết.'}</p>
-              </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-primary">{piece.dropRate}%</div>
-                  <div className="text-sm text-gray-600">Tỷ lệ rơi</div>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-primary capitalize">{piece.rarity}</div>
-                  <div className="text-sm text-gray-600">Độ hiếm</div>
-                </div>
-              </div>
-
-
+        {/* Footer */}
+        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-500">
+              ID: {piece._id}
+            </div>
+            <div className="flex gap-3">
+              {/* 3D Button - DISABLED */}
+              {/* <button
+                onClick={onView3D}
+                disabled={!piece.model3D || piece.model3D.trim() === ''}
+                className={`px-6 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  piece.model3D && piece.model3D.trim() !== ''
+                    ? 'text-white bg-blue-600 border border-blue-600 hover:bg-blue-700'
+                    : 'text-gray-400 bg-gray-100 border border-gray-200 cursor-not-allowed'
+                }`}
+                title={(!piece.model3D || piece.model3D.trim() === '') ? 'Chưa có model 3D' : 'Xem 3D'}
+              >
+                Xem 3D
+              </button> */}
+              <button
+                onClick={onClose}
+                className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Đóng
+              </button>
             </div>
           </div>
         </div>

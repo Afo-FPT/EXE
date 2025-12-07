@@ -31,21 +31,21 @@ const Header: React.FC = () => {
     // Sử dụng data tĩnh thay vì fetch API
     const staticHeaderData = [
       {
-        label: "Trang chủ",
-        href: "/"
+        label: 'Cửa hàng',
+        href: '/store',
       },
       {
-        label: "Cửa hàng",
-        href: "/store"
+        label: 'Đánh giá',
+        href: '/reviews',
       },
       {
-        label: "Về chúng tôi", 
-        href: "/about"
+        label: 'Về chúng tôi',
+        href: '/about',
       },
       {
-        label: "Liên hệ",
-        href: "/contact"
-      }
+        label: 'Liên hệ',
+        href: 'https://www.facebook.com/profile.php?id=61581476100959',
+      },
     ]
     
     setHeaderLink(staticHeaderData)

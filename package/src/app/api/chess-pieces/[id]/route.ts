@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import ChessPiece from '@/lib/models/ChessPiece';
+import path from 'path';
+import { writeFile, mkdir } from 'fs/promises';
 
 // GET /api/chess-pieces/[id]
 export async function GET(
@@ -52,7 +54,7 @@ export async function PUT(
     const price = formData.get('price') as string;
     const discountPercent = formData.get('discountPercent') as string;
     const stock = formData.get('stock') as string;
-    const model3D = formData.get('model3D') as File;
+    const model3D = (formData.get('model3DFile') as File) || (formData.get('model3D') as unknown as File);
     
     const updateData: any = {
       name,
@@ -64,8 +66,18 @@ export async function PUT(
       stock: parseInt(stock)
     };
     
-    if (model3D && model3D.size > 0) {
-      updateData.model3D = model3D.name;
+    if (model3D && (model3D as File).size > 0) {
+      const bytes = await (model3D as File).arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'models');
+      await mkdir(uploadsDir, { recursive: true });
+      const timestamp = Date.now();
+      const randomSuffix = Math.round(Math.random() * 1e9);
+      const ext = path.extname((model3D as File).name) || '.glb';
+      const filename = `model-${timestamp}-${randomSuffix}${ext}`;
+      const filePath = path.join(uploadsDir, filename);
+      await writeFile(filePath, buffer);
+      updateData.model3D = `/uploads/models/${filename}`;
     }
     
     const updatedChessPiece = await ChessPiece.findByIdAndUpdate(
